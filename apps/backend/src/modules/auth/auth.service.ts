@@ -44,7 +44,7 @@ export class AuthService {
 
   // User registration
   async registerUser(userData: ICreateUserRequest): Promise<IUserProfile> {
-    const { email, firstName, lastName, password, role = UserRole.USER } = userData;
+    const { email, firstName, lastName, password } = userData;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -58,14 +58,14 @@ export class AuthService {
     // Hash password
     const hashedPassword = await this.hashPassword(password);
 
-    // Create user
+    // Create user - always set role to USER for public registrations
     const user = await prisma.user.create({
       data: {
         email,
         firstName,
         lastName,
         password: hashedPassword,
-        role,
+        role: UserRole.USER, // Always USER for public registrations
         status: UserStatus.PENDING_VERIFICATION
       }
     });
@@ -218,6 +218,114 @@ export class AuthService {
     } catch (error) {
       throw new Error('Invalid refresh token');
     }
+  }
+
+  // Admin-only: Create user with specific role
+  async createUserAsAdmin(userData: ICreateUserRequest, role: UserRole, adminUserId: string): Promise<IUserProfile> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can create users with specific roles');
+    }
+
+    const { email, firstName, lastName, password } = userData;
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await this.hashPassword(password);
+
+    // Create user with specified role
+    const user = await prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        role,
+        status: UserStatus.ACTIVE // Admin-created users are active by default
+      }
+    });
+
+    // Return user profile without password
+    const { password: _, ...userProfile } = user;
+    return userProfile as IUserProfile;
+  }
+
+  // Admin-only: Update user role
+  async updateUserRole(userId: string, newRole: UserRole, adminUserId: string): Promise<IUserProfile> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can update user roles');
+    }
+
+    // Update user role
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole }
+    });
+
+    // Return user profile without password
+    const { password: _, ...userProfile } = user;
+    return userProfile as IUserProfile;
+  }
+
+  // Admin-only: Update user status
+  async updateUserStatus(userId: string, newStatus: UserStatus, adminUserId: string): Promise<IUserProfile> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can update user status');
+    }
+
+    // Update user status
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { status: newStatus }
+    });
+
+    // Return user profile without password
+    const { password: _, ...userProfile } = user;
+    return userProfile as IUserProfile;
+  }
+
+  // Get all users (admin only)
+  async getAllUsers(adminUserId: string): Promise<IUserProfile[]> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can view all users');
+    }
+
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Return user profiles without passwords
+    return users.map((user: IUser) => {
+      const { password: _, ...userProfile } = user;
+      return userProfile as IUserProfile;
+    });
   }
 
   // Get user profile

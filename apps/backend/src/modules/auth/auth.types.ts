@@ -1,16 +1,16 @@
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  CHECKER = 'checker',
-  AUDITOR = 'auditor',
-  COMPLIANCE = 'compliance'
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+  CHECKER = 'CHECKER',
+  AUDITOR = 'AUDITOR',
+  COMPLIANCE = 'COMPLIANCE'
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-  PENDING_VERIFICATION = 'pending_verification'
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  PENDING_VERIFICATION = 'PENDING_VERIFICATION'
 }
 
 export interface IUser {
@@ -33,7 +33,6 @@ export interface ICreateUserRequest {
   firstName: string;
   lastName: string;
   password: string;
-  role?: UserRole;
 }
 
 export interface ILoginRequest {

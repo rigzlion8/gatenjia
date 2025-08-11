@@ -8,8 +8,8 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  status: string;
+  role: 'USER' | 'ADMIN' | 'CHECKER' | 'AUDITOR' | 'COMPLIANCE';
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING_VERIFICATION';
 }
 
 export default function DashboardPage() {
@@ -114,17 +114,17 @@ export default function DashboardPage() {
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      user.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'
+                      user.status.toLowerCase() === 'active' ? 'bg-green-500' : 'bg-yellow-500'
                     }`}>
                       <span className="text-white font-semibold text-lg">
-                        {user.status === 'active' ? '✓' : '!'}
+                        {user.status.toLowerCase() === 'active' ? '✓' : '!'}
                       </span>
                     </div>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Account Status</dt>
-                      <dd className="text-lg font-medium text-gray-900 capitalize">{user.status}</dd>
+                      <dd className="text-lg font-medium text-gray-900 capitalize">{user.status.toLowerCase()}</dd>
                     </dl>
                   </div>
                 </div>
@@ -155,11 +155,11 @@ export default function DashboardPage() {
           <div className="mt-8 bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Welcome to Gatenjia!</h2>
             <p className="text-gray-600">
-              You are now logged in as a <span className="font-semibold capitalize">{user.role}</span> user. 
+              You are now logged in as a <span className="font-semibold capitalize">{user.role.toLowerCase()}</span> user. 
               Based on your role, you have access to different features and permissions within the system.
             </p>
             
-            {user.role === 'admin' && (
+            {user.role === 'ADMIN' && (
               <div className="mt-4 p-4 bg-blue-50 rounded-md">
                 <p className="text-blue-800">
                   <strong>Admin Access:</strong> You can manage users, view all transactions, and access system settings.
@@ -167,7 +167,7 @@ export default function DashboardPage() {
               </div>
             )}
             
-            {user.role === 'checker' && (
+            {user.role === 'CHECKER' && (
               <div className="mt-4 p-4 bg-yellow-50 rounded-md">
                 <p className="text-yellow-800">
                   <strong>Checker Access:</strong> You can review and approve second-level transactions.
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               </div>
             )}
             
-            {user.role === 'auditor' && (
+            {user.role === 'AUDITOR' && (
               <div className="mt-4 p-4 bg-purple-50 rounded-md">
                 <p className="text-purple-800">
                   <strong>Auditor Access:</strong> You can view audit logs and perform compliance reviews.
@@ -183,7 +183,7 @@ export default function DashboardPage() {
               </div>
             )}
             
-            {user.role === 'compliance' && (
+            {user.role === 'COMPLIANCE' && (
               <div className="mt-4 p-4 bg-green-50 rounded-md">
                 <p className="text-green-800">
                   <strong>Compliance Access:</strong> You can monitor regulatory compliance and manage risk assessments.

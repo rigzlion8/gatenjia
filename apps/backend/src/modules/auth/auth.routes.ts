@@ -14,4 +14,10 @@ router.post('/refresh-token', authController.refreshToken.bind(authController));
 router.get('/profile', authController.getProfile.bind(authController));
 router.post('/logout', authController.logout.bind(authController));
 
+// Admin-only routes (authentication + admin role required)
+router.post('/admin/create-user', authController.createUserAsAdmin.bind(authController));
+router.put('/admin/update-user-role', authController.updateUserRole.bind(authController));
+router.put('/admin/update-user-status', authController.updateUserStatus.bind(authController));
+router.get('/admin/users', authController.getAllUsers.bind(authController));
+
 export default router;

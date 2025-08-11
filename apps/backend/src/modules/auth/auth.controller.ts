@@ -214,4 +214,150 @@ export class AuthController {
       });
     }
   }
+
+  // Admin-only: Create user with specific role
+  async createUserAsAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, firstName, lastName, password, role } = req.body;
+      const adminUserId = (req as any).user?.userId;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      if (!email || !firstName || !lastName || !password || !role) {
+        res.status(400).json({
+          success: false,
+          message: 'All fields including role are required'
+        });
+        return;
+      }
+
+      const user = await this.authService.createUserAsAdmin(
+        { email, firstName, lastName, password },
+        role,
+        adminUserId
+      );
+      
+      res.status(201).json({
+        success: true,
+        message: 'User created successfully by admin',
+        data: user
+      });
+    } catch (error) {
+      console.error('Admin create user error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to create user'
+      });
+    }
+  }
+
+  // Admin-only: Update user role
+  async updateUserRole(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, newRole } = req.body;
+      const adminUserId = (req as any).user?.userId;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      if (!userId || !newRole) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID and new role are required'
+        });
+        return;
+      }
+
+      const user = await this.authService.updateUserRole(userId, newRole, adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        message: 'User role updated successfully',
+        data: user
+      });
+    } catch (error) {
+      console.error('Update user role error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update user role'
+      });
+    }
+  }
+
+  // Admin-only: Update user status
+  async updateUserStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, newStatus } = req.body;
+      const adminUserId = (req as any).user?.userId;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      if (!userId || !newStatus) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID and new status are required'
+        });
+        return;
+      }
+
+      const user = await this.authService.updateUserStatus(userId, newStatus, adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        message: 'User status updated successfully',
+        data: user
+      });
+    } catch (error) {
+      console.error('Update user status error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update user status'
+      });
+    }
+  }
+
+  // Admin-only: Get all users
+  async getAllUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      const users = await this.authService.getAllUsers(adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        data: users
+      });
+    } catch (error) {
+      console.error('Get all users error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get users'
+      });
+    }
+  }
 }
