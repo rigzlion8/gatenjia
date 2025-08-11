@@ -42,12 +42,12 @@ export class AuthController {
         return;
       }
 
-      const user = await this.authService.registerUser(userData);
+      const authResponse = await this.authService.registerUser(userData);
       
       res.status(201).json({
         success: true,
-        message: 'User registered successfully',
-        data: user
+        message: 'User registered and logged in successfully',
+        data: authResponse
       });
     } catch (error) {
       console.error('Registration error:', error);

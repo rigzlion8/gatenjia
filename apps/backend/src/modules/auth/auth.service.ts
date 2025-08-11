@@ -43,7 +43,7 @@ export class AuthService {
   }
 
   // User registration
-  async registerUser(userData: ICreateUserRequest): Promise<IUserProfile> {
+  async registerUser(userData: ICreateUserRequest): Promise<IAuthResponse> {
     const { email, firstName, lastName, password } = userData;
 
     // Check if user already exists
@@ -70,9 +70,32 @@ export class AuthService {
       }
     });
 
-    // Return user profile without password
+    // Generate tokens for the newly created user
+    const accessToken = this.generateAccessToken(user.id, user.role);
+    const refreshToken = this.generateRefreshToken(user.id);
+
+    // Store refresh token
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      }
+    });
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() }
+    });
+
+    // Return auth response with tokens
     const { password: _, ...userProfile } = user;
-    return userProfile as IUserProfile;
+    return {
+      user: userProfile as Omit<IUser, 'password'>,
+      token: accessToken,
+      refreshToken
+    };
   }
 
   // User login
@@ -94,8 +117,8 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    // Check user status
-    if (user.status !== UserStatus.ACTIVE) {
+    // Check user status - allow ACTIVE and PENDING_VERIFICATION users to log in
+    if (user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
       throw new Error('Account is not active. Please contact support.');
     }
 
@@ -143,7 +166,7 @@ export class AuthService {
           password: '', // No password for Google users
           googleId,
           role: UserRole.USER,
-          status: UserStatus.ACTIVE,
+          status: UserStatus.ACTIVE, // Google users are active by default
           emailVerified: true
         }
       });
@@ -218,6 +241,16 @@ export class AuthService {
     } catch (error) {
       throw new Error('Invalid refresh token');
     }
+  }
+
+  // Helper method to check if user can access features
+  canUserAccessFeatures(userStatus: UserStatus): boolean {
+    return userStatus === UserStatus.ACTIVE || userStatus === UserStatus.PENDING_VERIFICATION;
+  }
+
+  // Helper method to check if user has full access
+  hasFullAccess(userStatus: UserStatus): boolean {
+    return userStatus === UserStatus.ACTIVE;
   }
 
   // Admin-only: Create user with specific role
