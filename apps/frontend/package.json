@@ -1,0 +1,5 @@
+{
+  "name": "gatenjia-root",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"]
+}
