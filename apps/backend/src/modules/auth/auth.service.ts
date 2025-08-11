@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/database.js';
+import { WalletService } from './wallet.service.js';
 import { 
   IUser, 
   ICreateUserRequest, 
@@ -15,6 +16,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-i
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production';
 
 export class AuthService {
+  private walletService: WalletService;
+
+  constructor() {
+    this.walletService = new WalletService();
+  }
+
   // Password hashing
   private async hashPassword(password: string): Promise<string> {
     const saltRounds = 12;
@@ -88,6 +95,9 @@ export class AuthService {
       where: { id: user.id },
       data: { lastLoginAt: new Date() }
     });
+
+    // Create wallet for the new user
+    await this.walletService.createWallet(user.id);
 
     // Return auth response with tokens
     const { password: _, ...userProfile } = user;

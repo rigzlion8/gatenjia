@@ -13,6 +13,21 @@ export enum UserStatus {
   PENDING_VERIFICATION = 'PENDING_VERIFICATION'
 }
 
+export enum TransactionType {
+  CREDIT = 'CREDIT',
+  DEBIT = 'DEBIT',
+  TRANSFER = 'TRANSFER',
+  WITHDRAWAL = 'WITHDRAWAL',
+  DEPOSIT = 'DEPOSIT'
+}
+
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
+}
+
 export interface IUser {
   id: string;
   email: string;
@@ -26,6 +41,27 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date;
+}
+
+export interface IWallet {
+  id: string;
+  userId: string;
+  balance: number;
+  currency: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ITransaction {
+  id: string;
+  walletId: string;
+  type: TransactionType;
+  amount: number;
+  description: string;
+  reference?: string;
+  status: TransactionStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ICreateUserRequest {
@@ -60,4 +96,9 @@ export interface IUserProfile {
   emailVerified: boolean;
   createdAt: Date;
   lastLoginAt?: Date;
+}
+
+export interface IWalletResponse {
+  wallet: IWallet;
+  recentTransactions: ITransaction[];
 }
