@@ -1,17 +1,19 @@
-version: '3.9'
+version: "3.9"
 
 services:
   frontend:
     build:
       context: ../apps/frontend
       dockerfile: Dockerfile
+    container_name: gatenjia_frontend
+    command: npm run dev
     ports:
       - "3000:3000"
     volumes:
       - ../apps/frontend:/app
       - /app/node_modules
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       - backend
 
@@ -19,26 +21,31 @@ services:
     build:
       context: ../apps/backend
       dockerfile: Dockerfile
+    container_name: gatenjia_backend
+    command: npm run dev
     ports:
       - "4000:4000"
     volumes:
       - ../apps/backend:/app
       - /app/node_modules
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/gatenjia
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
     depends_on:
       - db
 
   db:
     image: postgres:16-alpine
+    container_name: gatenjia_db
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: gatenjia
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
 
 volumes:
-  db_data:
+  db-data:
