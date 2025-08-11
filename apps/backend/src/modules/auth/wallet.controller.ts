@@ -145,4 +145,54 @@ export class WalletController {
       });
     }
   }
+
+  // Get any user's wallet (admin only)
+  async getAnyUserWallet(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      const { userId } = req.params;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      // Verify admin role
+      const adminUser = await prisma.user.findUnique({
+        where: { id: adminUserId }
+      });
+
+      if (!adminUser || adminUser.role !== 'ADMIN') {
+        res.status(403).json({
+          success: false,
+          message: 'Only admins can view other users wallets'
+        });
+        return;
+      }
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+        return;
+      }
+
+      const walletData = await this.walletService.getAnyUserWallet(userId);
+      
+      res.status(200).json({
+        success: true,
+        data: walletData
+      });
+    } catch (error) {
+      console.error('Get any user wallet error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get user wallet'
+      });
+    }
+  }
 }

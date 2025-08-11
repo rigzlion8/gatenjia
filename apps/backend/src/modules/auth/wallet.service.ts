@@ -219,4 +219,26 @@ export class WalletService {
 
     return transactions as ITransaction[];
   }
+
+  // Admin method: Get any user's wallet (admin only)
+  async getAnyUserWallet(userId: string) {
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10 // Last 10 transactions
+        }
+      }
+    });
+
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    return {
+      wallet: wallet as IWallet,
+      recentTransactions: wallet.transactions as ITransaction[]
+    };
+  }
 }

@@ -11,6 +11,7 @@ router.get('/wallet', authenticateToken, walletController.getUserWallet.bind(wal
 router.get('/transactions', authenticateToken, walletController.getTransactionHistory.bind(walletController));
 
 // Admin-only routes
+router.get('/admin/user/:userId/wallet', authenticateToken, requireAdmin, walletController.getAnyUserWallet.bind(walletController));
 router.post('/transfer', authenticateToken, requireAdmin, walletController.transferFunds.bind(walletController));
 
 export default router;

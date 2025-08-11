@@ -101,7 +101,7 @@ export default function UserDetailPage() {
 
   const fetchUserWallet = async (token: string, targetUserId: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/wallet/wallet`, {
+      const response = await fetch(`http://localhost:4000/api/wallet/admin/user/${targetUserId}/wallet`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
