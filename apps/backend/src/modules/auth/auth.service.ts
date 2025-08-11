@@ -327,26 +327,42 @@ export class AuthService {
     return userProfile as IUserProfile;
   }
 
-  // Admin-only: Update user status
-  async updateUserStatus(userId: string, newStatus: UserStatus, adminUserId: string): Promise<IUserProfile> {
-    // Verify admin user exists and has admin role
-    const adminUser = await prisma.user.findUnique({
-      where: { id: adminUserId }
+  // Update user status (admin only)
+  async updateUserStatus(userId: string, newStatus: UserStatus): Promise<IUser> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
-      throw new Error('Unauthorized: Only admins can update user status');
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    // Update user status
-    const user = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { status: newStatus }
     });
 
-    // Return user profile without password
-    const { password: _, ...userProfile } = user;
-    return userProfile as IUserProfile;
+    return updatedUser as IUser;
+  }
+
+  // Update user password (admin only)
+  async updateUserPassword(userId: string, newPassword: string): Promise<IUser> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const hashedPassword = await this.hashPassword(newPassword);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+
+    return updatedUser as IUser;
   }
 
   // Get all users (admin only)

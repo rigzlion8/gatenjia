@@ -18,6 +18,7 @@ router.post('/logout', authController.logout.bind(authController));
 router.post('/admin/create-user', authController.createUserAsAdmin.bind(authController));
 router.put('/admin/update-user-role', authController.updateUserRole.bind(authController));
 router.put('/admin/update-user-status', authController.updateUserStatus.bind(authController));
+router.put('/admin/update-user-password', authController.updateUserPassword.bind(authController));
 router.get('/admin/users', authController.getAllUsers.bind(authController));
 
 export default router;

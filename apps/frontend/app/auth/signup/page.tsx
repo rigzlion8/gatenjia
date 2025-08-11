@@ -80,7 +80,7 @@ export default function SignUpPage() {
 
       if (response.ok) {
         // Store tokens and user data (user is automatically logged in)
-        localStorage.setItem('accessToken', data.data.token);
+        localStorage.setItem('token', data.data.token);
         localStorage.setItem('refreshToken', data.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.data.user));
         

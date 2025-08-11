@@ -295,20 +295,11 @@ export class AuthController {
     }
   }
 
-  // Admin-only: Update user status
+  // Update user status (admin only)
   async updateUserStatus(req: Request, res: Response): Promise<void> {
     try {
       const { userId, newStatus } = req.body;
-      const adminUserId = (req as any).user?.userId;
       
-      if (!adminUserId) {
-        res.status(401).json({
-          success: false,
-          message: 'User not authenticated'
-        });
-        return;
-      }
-
       if (!userId || !newStatus) {
         res.status(400).json({
           success: false,
@@ -317,18 +308,47 @@ export class AuthController {
         return;
       }
 
-      const user = await this.authService.updateUserStatus(userId, newStatus, adminUserId);
+      const updatedUser = await this.authService.updateUserStatus(userId, newStatus);
       
       res.status(200).json({
         success: true,
         message: 'User status updated successfully',
-        data: user
+        data: updatedUser
       });
     } catch (error) {
       console.error('Update user status error:', error);
       res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to update user status'
+      });
+    }
+  }
+
+  // Update user password (admin only)
+  async updateUserPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, newPassword } = req.body;
+      
+      if (!userId || !newPassword) {
+        res.status(400).json({
+          success: false,
+          message: 'User ID and new password are required'
+        });
+        return;
+      }
+
+      const updatedUser = await this.authService.updateUserPassword(userId, newPassword);
+      
+      res.status(200).json({
+        success: true,
+        message: 'User password updated successfully',
+        data: updatedUser
+      });
+    } catch (error) {
+      console.error('Update user password error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update user password'
       });
     }
   }

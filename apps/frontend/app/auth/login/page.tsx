@@ -67,7 +67,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         // Store tokens in localStorage (in production, use httpOnly cookies)
-        localStorage.setItem('accessToken', data.data.token);
+        localStorage.setItem('token', data.data.token);
         localStorage.setItem('refreshToken', data.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.data.user));
         
