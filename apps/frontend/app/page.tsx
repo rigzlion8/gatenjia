@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function HomePage() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8">
@@ -10,12 +12,16 @@ export default function HomePage() {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-          <button className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 border-0 text-sm sm:text-base">
-            Sign Up
-          </button>
-          <button className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-transparent text-blue-600 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white transform hover:scale-105 transition-all duration-200 text-sm sm:text-base">
-            Login
-          </button>
+          <Link href="/auth/signup">
+            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 border-0 text-sm sm:text-base">
+              Sign Up
+            </button>
+          </Link>
+          <Link href="/auth/login">
+            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-transparent text-blue-600 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white transform hover:scale-105 transition-all duration-200 text-sm sm:text-base">
+              Login
+            </button>
+          </Link>
         </div>
       </div>
     </main>
