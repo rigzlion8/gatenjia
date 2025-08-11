@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from './auth.controller.js';
+import { authenticateToken, requireAdmin } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 const authController = new AuthController();
@@ -11,14 +12,14 @@ router.post('/google-login', authController.googleLogin.bind(authController));
 router.post('/refresh-token', authController.refreshToken.bind(authController));
 
 // Protected routes (authentication required)
-router.get('/profile', authController.getProfile.bind(authController));
-router.post('/logout', authController.logout.bind(authController));
+router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
+router.post('/logout', authenticateToken, authController.logout.bind(authController));
 
 // Admin-only routes (authentication + admin role required)
-router.post('/admin/create-user', authController.createUserAsAdmin.bind(authController));
-router.put('/admin/update-user-role', authController.updateUserRole.bind(authController));
-router.put('/admin/update-user-status', authController.updateUserStatus.bind(authController));
-router.put('/admin/update-user-password', authController.updateUserPassword.bind(authController));
-router.get('/admin/users', authController.getAllUsers.bind(authController));
+router.post('/admin/create-user', authenticateToken, requireAdmin, authController.createUserAsAdmin.bind(authController));
+router.put('/admin/update-user-role', authenticateToken, requireAdmin, authController.updateUserRole.bind(authController));
+router.put('/admin/update-user-status', authenticateToken, requireAdmin, authController.updateUserStatus.bind(authController));
+router.put('/admin/update-user-password', authenticateToken, requireAdmin, authController.updateUserPassword.bind(authController));
+router.get('/admin/users', authenticateToken, requireAdmin, authController.getAllUsers.bind(authController));
 
 export default router;
