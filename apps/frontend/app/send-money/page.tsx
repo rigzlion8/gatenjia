@@ -131,7 +131,9 @@ export default function SendMoneyPage() {
       });
 
       if (response.success) {
-        setSuccess('Transfer completed successfully!');
+        setSuccess('Transfer completed successfully! Redirecting to dashboard...');
+        
+        // Clear form data
         setTransferData({
           toUserId: '',
           amount: 0,
@@ -141,12 +143,11 @@ export default function SendMoneyPage() {
         });
         setSelectedUser(null);
         setSearchQuery('');
-        fetchWalletBalance(); // Refresh balance
         
-        // If WhatsApp transfer, show WhatsApp integration message
-        if (transferData.viaWhatsApp) {
-          setSuccess(prev => prev + ' WhatsApp notification sent to recipient.');
-        }
+        // Wait a moment to show success message, then redirect to dashboard
+        setTimeout(() => {
+          router.push('/dashboard?transfer=success&amount=' + transferData.amount + '&recipient=' + encodeURIComponent(selectedUser?.firstName + ' ' + selectedUser?.lastName));
+        }, 2000);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Transfer failed';

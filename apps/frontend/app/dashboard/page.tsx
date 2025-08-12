@@ -50,6 +50,10 @@ export default function Dashboard() {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<{
+    amount: string;
+    recipient: string;
+  } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -87,6 +91,34 @@ export default function Dashboard() {
       router.push('/auth/login');
     }
   }, [router]);
+
+  // Handle transfer success from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const transferSuccessParam = urlParams.get('transfer');
+    const transferAmount = urlParams.get('amount');
+    const transferRecipient = urlParams.get('recipient');
+    
+    if (transferSuccessParam === 'success' && transferAmount && transferRecipient) {
+      // Set transfer success state
+      setTransferSuccess({
+        amount: transferAmount,
+        recipient: transferRecipient
+      });
+      
+      // Refresh wallet data to show updated balance and transactions
+      fetchWalletData();
+      
+      // Clear URL parameters after processing
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
+      // Clear transfer success after 10 seconds
+      setTimeout(() => {
+        setTransferSuccess(null);
+      }, 10000);
+    }
+  }, []);
 
   const fetchWalletData = async () => {
     try {
@@ -208,6 +240,44 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Success Message */}
+      {transferSuccess && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-green-800">Transfer Successful! 🎉</h3>
+                  <p className="mt-1 text-sm text-green-700">
+                    You successfully sent ${transferSuccess.amount} to {transferSuccess.recipient}. 
+                    The transaction has been recorded and notifications sent.
+                  </p>
+                  <div className="mt-2 text-xs text-green-600">
+                    • Email notification sent to recipient
+                    • In-app notification created
+                    • Transaction recorded in your history
+                    • Wallet balance updated
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setTransferSuccess(null)}
+                className="ml-4 flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
