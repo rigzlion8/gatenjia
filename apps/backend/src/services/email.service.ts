@@ -362,6 +362,55 @@ export class EmailService {
     return this.sendEmail({ to: user.email, subject, html });
   }
 
+  // Funds added to wallet notification
+  async sendFundsAddedEmail(user: UserData, amount: number, description: string, transactionId: string): Promise<boolean> {
+    const subject = 'Funds Added to Your Wallet! 💰';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #00b894 0%, #00a085 100%); padding: 30px; text-align: center; color: white;">
+          <h1 style="margin: 0; font-size: 28px;">Funds Added Successfully!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Your wallet has been credited</p>
+        </div>
+        
+        <div style="padding: 30px; background: #f9f9f9;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${user.firstName} ${user.lastName}!</h2>
+          
+          <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin: 0 0 15px 0; color: #155724;">Transaction Details</h3>
+            <p style="margin: 5px 0; color: #155724;"><strong>Amount Added:</strong> ${amount} G Coins</p>
+            <p style="margin: 5px 0; color: #155724;"><strong>Description:</strong> ${description}</p>
+            <p style="margin: 5px 0; color: #155724;"><strong>Transaction ID:</strong> ${transactionId}</p>
+            <p style="margin: 5px 0; color: #155724;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            Great news! Your wallet has been successfully credited with ${amount} G Coins. The funds are now available for you to use for transfers, payments, and other transactions.
+          </p>
+          
+          <div style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #2e7d32;">
+              <strong>✅ Confirmed:</strong> Your transaction has been processed and the funds are now in your wallet.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
+               style="background: #00b894; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              View Wallet
+            </a>
+          </div>
+        </div>
+        
+        <div style="background: #333; color: white; padding: 20px; text-align: center; font-size: 12px;">
+          <p style="margin: 0;">© 2024 Gatenjia. All rights reserved.</p>
+          <p style="margin: 5px 0 0 0;">This email was sent to ${user.email}</p>
+        </div>
+      </div>
+    `;
+
+    return this.sendEmail({ to: user.email, subject, html });
+  }
+
   // Failed transaction notification
   async sendFailedTransactionEmail(user: UserData, transaction: TransactionData, error: string): Promise<boolean> {
     const subject = 'Transaction Failed - Action Required ❌';

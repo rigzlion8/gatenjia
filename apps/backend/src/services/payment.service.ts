@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { notificationService } from './notification.service.js';
+import { emailService } from './email.service.js';
 import { TransactionType, TransactionStatus } from '../modules/auth/auth.types.js';
 
 export interface PaymentCardDetails {
@@ -113,6 +114,32 @@ export class PaymentService {
       } catch (error) {
         console.error(`[PAYMENT] Failed to create notification for user ${paymentRequest.userId}:`, error);
         // Don't fail the payment if notification fails
+      }
+
+      // Send email notification to user
+      try {
+        console.log(`[PAYMENT] Sending email notification for user ${paymentRequest.userId}`);
+        
+        // Get user details for email
+        const user = await prisma.user.findUnique({
+          where: { id: paymentRequest.userId },
+          select: { firstName: true, lastName: true, email: true }
+        });
+        
+        if (user) {
+          await emailService.sendFundsAddedEmail(
+            user,
+            paymentRequest.amount,
+            paymentRequest.description || 'Bank deposit',
+            transaction.id
+          );
+          console.log(`[PAYMENT] Email notification sent successfully for user ${paymentRequest.userId}`);
+        } else {
+          console.error(`[PAYMENT] User not found for email notification: ${paymentRequest.userId}`);
+        }
+      } catch (error) {
+        console.error(`[PAYMENT] Failed to send email notification for user ${paymentRequest.userId}:`, error);
+        // Don't fail the payment if email fails
       }
 
       console.log(`[PAYMENT] Payment processing completed successfully for user ${paymentRequest.userId}`);
