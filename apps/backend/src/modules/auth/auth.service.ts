@@ -14,6 +14,7 @@ import {
   UserStatus 
 } from './auth.types';
 import { prismaUserToIUser, prismaUsersToIUsers } from './type-converters';
+import { USER_ROLES, USER_STATUSES } from './auth.constants';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production';
@@ -75,8 +76,8 @@ export class AuthService {
         firstName,
         lastName,
         password: hashedPassword,
-        role: UserRole.USER, // Always USER for public registrations
-        status: UserStatus.PENDING_VERIFICATION
+        role: USER_ROLES.USER, // Always USER for public registrations
+        status: USER_STATUSES.PENDING_VERIFICATION
       }
     });
 
