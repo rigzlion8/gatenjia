@@ -1,14 +1,14 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm-9_x"]
+nixPkgs = ["nodejs_18", "yarn"]
 
 [phases.install]
-cmds = ["npm ci --only=production"]
+cmds = ["cd apps/frontend && yarn install --production"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["cd apps/frontend && yarn build"]
 
 [start]
-cmd = "npm start"
+cmd = "cd apps/frontend && yarn start"
 
 [variables]
 NODE_ENV = "production"
