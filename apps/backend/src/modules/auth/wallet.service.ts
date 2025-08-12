@@ -1,6 +1,8 @@
 import { prisma } from '../../config/database.js';
 import { IWallet, ITransaction, TransactionType, TransactionStatus } from './auth.types.js';
 import { whatsappService } from '../../services/whatsapp.service.js';
+import { emailService } from '../../services/email.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 export class WalletService {
   // Create wallet for new user
@@ -320,6 +322,58 @@ export class WalletService {
         }
       }
 
+      // Send email notifications and create in-app notifications
+      try {
+        // Get user details for email notifications
+        const [sender, recipient] = await Promise.all([
+          prisma.user.findUnique({
+            where: { id: fromUserId },
+            select: { firstName: true, lastName: true, email: true }
+          }),
+          prisma.user.findUnique({
+            where: { id: toUserId },
+            select: { firstName: true, lastName: true, email: true }
+          })
+        ]);
+
+        if (sender) {
+          // Send money sent email to sender
+          await emailService.sendMoneySentEmail(
+            { firstName: sender.firstName, lastName: sender.lastName, email: sender.email },
+            { amount, description, date: new Date().toISOString() },
+            recipient?.email || 'Unknown'
+          );
+
+          // Create money sent notification for sender
+          await notificationService.createMoneySentNotification(
+            fromUserId,
+            amount,
+            recipient?.firstName || 'Unknown User',
+            `tx-${Date.now()}`
+          );
+        }
+
+        if (recipient) {
+          // Send money received email to recipient
+          await emailService.sendMoneyReceivedEmail(
+            { firstName: recipient.firstName, lastName: recipient.lastName, email: recipient.email },
+            { amount, description, date: new Date().toISOString() },
+            sender?.email || 'Unknown'
+          );
+
+          // Create money received notification for recipient
+          await notificationService.createMoneyReceivedNotification(
+            toUserId,
+            amount,
+            sender?.firstName || 'Unknown User',
+            `tx-${Date.now()}`
+          );
+        }
+      } catch (error) {
+        console.error('Email and notification services failed:', error);
+        // Don't fail the transfer if notifications fail
+      }
+
       return {
         fromWallet: updatedFromWallet as IWallet,
         toWallet: updatedToWallet as IWallet
@@ -367,6 +421,40 @@ export class WalletService {
         console.error('WhatsApp notification failed:', error);
         // Don't fail the request if WhatsApp notification fails
       }
+    }
+
+    // Send email notification
+    try {
+      const [requester, sender] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: requesterId },
+          select: { firstName: true, lastName: true, email: true }
+        }),
+        prisma.user.findUnique({
+          where: { id: fromUserId },
+          select: { firstName: true, lastName: true, email: true }
+        })
+      ]);
+
+      if (sender) {
+        // Send money request email to the person being asked for money
+        await emailService.sendMoneyRequestEmail(
+          { firstName: sender.firstName, lastName: sender.lastName, email: sender.email },
+          { amount, description, date: new Date().toISOString() },
+          requester?.email || 'Unknown'
+        );
+
+        // Create money request notification for the person being asked for money
+        await notificationService.createMoneyRequestNotification(
+          fromUserId,
+          amount,
+          requester?.firstName || 'Unknown User',
+          moneyRequest.id
+        );
+      }
+    } catch (error) {
+      console.error('Email notification failed:', error);
+      // Don't fail the request if email notification fails
     }
 
     return moneyRequest;

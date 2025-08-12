@@ -13,27 +13,26 @@ interface User {
   phoneNumber?: string;
 }
 
-interface TransferRequest {
-  toUserId: string;
+interface RequestData {
+  fromUserId: string;
   amount: number;
   description: string;
   viaWhatsApp: boolean;
-  recipientPhone?: string;
+  senderPhone?: string;
 }
 
-export default function SendMoneyPage() {
+export default function RequestMoneyPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [transferData, setTransferData] = useState<TransferRequest>({
-    toUserId: '',
+  const [requestData, setRequestData] = useState<RequestData>({
+    fromUserId: '',
     amount: 0,
     description: '',
     viaWhatsApp: false,
-    recipientPhone: ''
+    senderPhone: ''
   });
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -50,21 +49,11 @@ export default function SendMoneyPage() {
     try {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
-      fetchWalletBalance();
     } catch (error) {
       console.error('Error parsing user data:', error);
       router.push('/auth/login');
     }
   }, [router]);
-
-  const fetchWalletBalance = async () => {
-    try {
-      const response = await apiClient.get<{ balance: number; currency: string }>('/api/wallet/balance');
-      setWalletBalance(response.data?.balance || 0);
-    } catch (error) {
-      console.error('Error fetching wallet balance:', error);
-    }
-  };
 
   const searchUsers = async (query: string) => {
     if (query.length < 3) {
@@ -95,25 +84,20 @@ export default function SendMoneyPage() {
 
   const selectUser = (user: User) => {
     setSelectedUser(user);
-    setTransferData(prev => ({
+    setRequestData(prev => ({
       ...prev,
-      toUserId: user.id,
-      recipientPhone: user.phoneNumber || ''
+      fromUserId: user.id,
+      senderPhone: user.phoneNumber || ''
     }));
     setSearchQuery(`${user.firstName} ${user.lastName} (${user.email})`);
     setSearchResults([]);
   };
 
-  const handleTransfer = async (e: React.FormEvent) => {
+  const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedUser || transferData.amount <= 0 || !transferData.description) {
+    if (!selectedUser || requestData.amount <= 0 || !requestData.description) {
       setError('Please fill in all required fields');
-      return;
-    }
-
-    if (transferData.amount > walletBalance) {
-      setError('Insufficient funds in your wallet');
       return;
     }
 
@@ -122,34 +106,33 @@ export default function SendMoneyPage() {
     setSuccess(null);
 
     try {
-      const response = await apiClient.post('/api/wallet/transfer', {
-        toUserId: transferData.toUserId,
-        amount: transferData.amount,
-        description: transferData.description,
-        viaWhatsApp: transferData.viaWhatsApp,
-        recipientPhone: transferData.recipientPhone
+      const response = await apiClient.post('/api/wallet/request-money', {
+        fromUserId: requestData.fromUserId,
+        amount: requestData.amount,
+        description: requestData.description,
+        viaWhatsApp: requestData.viaWhatsApp,
+        senderPhone: requestData.senderPhone
       });
 
       if (response.success) {
-        setSuccess('Transfer completed successfully!');
-        setTransferData({
-          toUserId: '',
+        setSuccess('Money request sent successfully!');
+        setRequestData({
+          fromUserId: '',
           amount: 0,
           description: '',
           viaWhatsApp: false,
-          recipientPhone: ''
+          senderPhone: ''
         });
         setSelectedUser(null);
         setSearchQuery('');
-        fetchWalletBalance(); // Refresh balance
         
-        // If WhatsApp transfer, show WhatsApp integration message
-        if (transferData.viaWhatsApp) {
-          setSuccess(prev => prev + ' WhatsApp notification sent to recipient.');
+        // If WhatsApp request, show WhatsApp integration message
+        if (requestData.viaWhatsApp) {
+          setSuccess(prev => prev + ' WhatsApp notification sent to sender.');
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Transfer failed';
+      const errorMessage = error instanceof Error ? error.message : 'Request failed';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -174,8 +157,8 @@ export default function SendMoneyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Send Money</h1>
-              <p className="text-gray-600">Transfer funds to other users</p>
+              <h1 className="text-2xl font-bold text-gray-900">Request Money</h1>
+              <p className="text-gray-600">Ask other users to send you money</p>
             </div>
             <div className="flex items-center space-x-4">
               <Link
@@ -200,7 +183,7 @@ export default function SendMoneyPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Transfer Failed</h3>
+                <h3 className="text-sm font-medium text-red-800">Request Failed</h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
             </div>
@@ -218,7 +201,7 @@ export default function SendMoneyPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">Transfer Successful</h3>
+                <h3 className="text-sm font-medium text-green-800">Request Sent</h3>
                 <p className="mt-1 text-sm text-green-700">{success}</p>
               </div>
             </div>
@@ -227,30 +210,20 @@ export default function SendMoneyPage() {
       )}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Wallet Balance Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Wallet</h2>
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
-            <h3 className="text-lg font-medium mb-2">Available Balance</h3>
-            <p className="text-3xl font-bold">{formatCurrency(walletBalance)}</p>
-            <p className="text-blue-100">Ready to send</p>
-          </div>
-        </div>
-
-        {/* Transfer Form */}
+        {/* Request Form */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Send Money</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Request Money</h2>
           
-          <form onSubmit={handleTransfer} className="space-y-6">
-            {/* Recipient Search */}
+          <form onSubmit={handleRequest} className="space-y-6">
+            {/* Sender Search */}
             <div>
-              <label htmlFor="recipient" className="block text-sm font-medium text-gray-700 mb-2">
-                Recipient
+              <label htmlFor="sender" className="block text-sm font-medium text-gray-700 mb-2">
+                From (Who to ask for money)
               </label>
               <div className="relative">
                 <input
                   type="text"
-                  id="recipient"
+                  id="sender"
                   placeholder="Search by name or email..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
@@ -287,7 +260,7 @@ export default function SendMoneyPage() {
             {/* Amount */}
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                Amount
+                Amount to Request
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500">$</span>
@@ -296,29 +269,26 @@ export default function SendMoneyPage() {
                   id="amount"
                   min="0.01"
                   step="0.01"
-                  value={transferData.amount || ''}
-                  onChange={(e) => setTransferData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                  value={requestData.amount || ''}
+                  onChange={(e) => setRequestData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                   className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="0.00"
                 />
               </div>
-              <p className="mt-1 text-sm text-gray-500">
-                Available: {formatCurrency(walletBalance)}
-              </p>
             </div>
 
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+                Reason for Request
               </label>
-              <input
-                type="text"
+              <textarea
                 id="description"
-                value={transferData.description}
-                onChange={(e) => setTransferData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                value={requestData.description}
+                onChange={(e) => setRequestData(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="What's this transfer for?"
+                placeholder="Explain why you need this money..."
               />
             </div>
 
@@ -328,31 +298,31 @@ export default function SendMoneyPage() {
                 <input
                   type="checkbox"
                   id="whatsapp"
-                  checked={transferData.viaWhatsApp}
-                  onChange={(e) => setTransferData(prev => ({ ...prev, viaWhatsApp: e.target.checked }))}
+                  checked={requestData.viaWhatsApp}
+                  onChange={(e) => setRequestData(prev => ({ ...prev, viaWhatsApp: e.target.checked }))}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="whatsapp" className="flex items-center space-x-2">
                   <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
                   </svg>
-                  <span className="text-green-800 font-medium">Send via WhatsApp</span>
+                  <span className="text-green-800 font-medium">Request via WhatsApp</span>
                 </label>
               </div>
               <p className="mt-2 text-sm text-green-700">
-                Enable this to send a WhatsApp notification to the recipient about the transfer
+                Enable this to send a WhatsApp notification to the sender about your request
               </p>
               
-              {transferData.viaWhatsApp && (
+              {requestData.viaWhatsApp && (
                 <div className="mt-3">
-                  <label htmlFor="recipientPhone" className="block text-sm font-medium text-green-800 mb-1">
-                    Recipient Phone Number (WhatsApp)
+                  <label htmlFor="senderPhone" className="block text-sm font-medium text-green-800 mb-1">
+                    Sender Phone Number (WhatsApp)
                   </label>
                   <input
                     type="tel"
-                    id="recipientPhone"
-                    value={transferData.recipientPhone}
-                    onChange={(e) => setTransferData(prev => ({ ...prev, recipientPhone: e.target.value }))}
+                    id="senderPhone"
+                    value={requestData.senderPhone}
+                    onChange={(e) => setRequestData(prev => ({ ...prev, senderPhone: e.target.value }))}
                     className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="+1234567890"
                   />
@@ -363,34 +333,46 @@ export default function SendMoneyPage() {
               )}
             </div>
 
-            {/* Transfer Button */}
+            {/* Request Button */}
             <button
               type="submit"
-              disabled={loading || !selectedUser || transferData.amount <= 0 || !transferData.description}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              disabled={loading || !selectedUser || requestData.amount <= 0 || !requestData.description}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Processing Transfer...</span>
+                  <span>Sending Request...</span>
                 </div>
               ) : (
-                `Send ${formatCurrency(transferData.amount)}`
+                `Request ${formatCurrency(requestData.amount)}`
               )}
             </button>
-    </form>
+          </form>
         </div>
 
-        {/* Transfer Tips */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
-          <h3 className="text-lg font-medium text-blue-900 mb-3">💡 Transfer Tips</h3>
-          <ul className="space-y-2 text-sm text-blue-800">
-            <li>• Double-check the recipient's email before sending</li>
-            <li>• Include a clear description for your records</li>
-            <li>• WhatsApp notifications help recipients know about transfers instantly</li>
-            <li>• Transfers are processed immediately and cannot be reversed</li>
-            <li>• Keep your phone number updated for WhatsApp features</li>
+        {/* Request Tips */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mt-8">
+          <h3 className="text-lg font-medium text-green-900 mb-3">💡 Request Tips</h3>
+          <ul className="space-y-2 text-sm text-green-800">
+            <li>• Be specific about why you need the money</li>
+            <li>• Include a clear description to help the sender understand</li>
+            <li>• WhatsApp notifications increase the chance of quick responses</li>
+            <li>• Requests are not automatic - the sender must approve</li>
+            <li>• You'll be notified when the sender responds to your request</li>
           </ul>
+        </div>
+
+        {/* Pending Requests */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mt-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Your Pending Requests</h3>
+          <div className="text-center py-8 text-gray-500">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="mt-2 text-sm">No pending requests</p>
+            <p className="text-xs">Your money requests will appear here</p>
+          </div>
         </div>
       </div>
     </div>

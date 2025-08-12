@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/database.js';
 import { WalletService } from './wallet.service.js';
+import { emailService } from '../../services/email.service.js';
+import { notificationService } from '../../services/notification.service.js';
 import { 
   IUser, 
   ICreateUserRequest, 
@@ -98,6 +100,26 @@ export class AuthService {
 
     // Create wallet for the new user
     await this.walletService.createWallet(user.id);
+
+    // Send welcome email notification
+    try {
+      await emailService.sendWelcomeEmail({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      });
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // Don't fail registration if email fails
+    }
+
+    // Create welcome notification
+    try {
+      await notificationService.createWelcomeNotification(user.id, user.firstName);
+    } catch (error) {
+      console.error('Failed to create welcome notification:', error);
+      // Don't fail registration if notification fails
+    }
 
     // Return auth response with tokens
     const { password: _, ...userProfile } = user;
