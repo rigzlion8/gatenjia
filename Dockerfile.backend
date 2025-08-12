@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY apps/backend/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy Prisma schema
 COPY apps/backend/prisma ./prisma/
@@ -26,6 +26,9 @@ COPY apps/backend/tsconfig.json ./
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm ci --only=production
 
 EXPOSE 4000
 
