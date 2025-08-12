@@ -1,14 +1,21 @@
 import app from './app';
 import { connectDatabase, disconnectDatabase } from './config/database';
 
-const PORT = process.env.PORT || 4000;
+const PORT = parseInt(process.env.PORT || '4000', 10);
 
 async function startServer() {
+  console.log('🚀 Starting Gatenjia backend server...');
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔌 Port: ${PORT}`);
+  console.log(`🗄️ Database URL: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}`);
+  
   try {
     // Start server first
-    app.listen(PORT, () => {
-      console.log(`🚀 Backend running at http://localhost:${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Backend running on port ${PORT}`);
+      console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
+      console.log(`🌐 Server bound to all interfaces for Railway deployment`);
+      console.log('✅ HTTP server started successfully');
     });
     
     // Try to connect to database (don't fail if it doesn't work)
