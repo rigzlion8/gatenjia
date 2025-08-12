@@ -53,7 +53,7 @@ const NotificationCenter = forwardRef<NotificationCenterRef>((props, ref) => {
       setLoading(true);
       
       // Fetch real notifications from backend
-      const response = await apiClient.get<{success: boolean, data: Notification[]}>('/api/notifications');
+      const response = await apiClient.get<Notification[]>('/api/notifications');
       
       if (response.success && response.data) {
         setNotifications(response.data);

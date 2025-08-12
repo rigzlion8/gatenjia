@@ -53,9 +53,9 @@ export default function NotificationsPage() {
       
       // Try to fetch real notifications from the API
       try {
-        const response = await apiClient.get<{success: boolean, data: Notification[]}>('/api/notifications');
-        if (response.data.success) {
-          setNotifications(response.data.data);
+        const response = await apiClient.get<Notification[]>('/api/notifications');
+        if (response.success && response.data) {
+          setNotifications(response.data);
           return;
         }
       } catch (apiError) {
