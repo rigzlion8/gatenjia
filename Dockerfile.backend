@@ -3,21 +3,24 @@ FROM node:20-slim
 # Install OpenSSL and other dependencies
 RUN apt-get update && apt-get install -y \
     openssl \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY apps/backend/package*.json ./
-RUN npm install
 
-# Copy Prisma schema from backend directory
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy Prisma schema
 COPY apps/backend/prisma ./prisma/
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy backend source code
+# Copy source code
 COPY apps/backend/src ./src
 COPY apps/backend/tsconfig.json ./
 
@@ -25,4 +28,9 @@ COPY apps/backend/tsconfig.json ./
 RUN npm run build
 
 EXPOSE 4000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:4000/health || exit 1
+
 CMD ["npm", "start"]
