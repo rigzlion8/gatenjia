@@ -566,7 +566,7 @@ export class WalletService {
     const result = await this.transferToUser(
       request.fromUserId,
       request.requesterId,
-      request.amount,
+      Number(request.amount),
       request.description,
       request.viaWhatsApp,
       request.senderPhone

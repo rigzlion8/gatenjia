@@ -15,12 +15,12 @@ export interface IUser {
   password: string;
   role: UserRole;
   status: UserStatus;
-  googleId?: string;
-  phoneNumber?: string;
+  googleId?: string | null;
+  phoneNumber?: string | null;
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
-  lastLoginAt?: Date;
+  lastLoginAt?: Date | null;
 }
 
 export interface IWallet {
