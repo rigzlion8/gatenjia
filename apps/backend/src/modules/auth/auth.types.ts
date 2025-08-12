@@ -47,7 +47,7 @@ export interface IUser {
 export interface IWallet {
   id: string;
   userId: string;
-  balance: number;
+  balance: number | any; // Allow Prisma Decimal type
   currency: string;
   createdAt: Date;
   updatedAt: Date;
@@ -57,7 +57,7 @@ export interface ITransaction {
   id: string;
   walletId: string;
   type: TransactionType;
-  amount: number;
+  amount: number | any; // Allow Prisma Decimal type
   description: string;
   reference?: string;
   status: TransactionStatus;

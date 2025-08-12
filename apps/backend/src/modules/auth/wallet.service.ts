@@ -1,8 +1,9 @@
-import { prisma } from '../../config/database.js';
-import { IWallet, ITransaction, TransactionType, TransactionStatus } from './auth.types.js';
-import { whatsappService } from '../../services/whatsapp.service.js';
-import { emailService } from '../../services/email.service.js';
-import { notificationService } from '../../services/notification.service.js';
+import { prisma } from '../../config/database';
+import { IWallet, ITransaction, TransactionType, TransactionStatus } from './auth.types';
+import { whatsappService } from '../../services/whatsapp.service';
+import { emailService } from '../../services/email.service';
+import { notificationService } from '../../services/notification.service';
+import { prismaWalletToIWallet, prismaTransactionToITransaction } from './type-converters';
 
 export class WalletService {
   // Create wallet for new user
@@ -26,7 +27,7 @@ export class WalletService {
       }
     });
 
-    return wallet as IWallet;
+    return prismaWalletToIWallet(wallet);
   }
 
   // Get user wallet with recent transactions
@@ -47,8 +48,8 @@ export class WalletService {
     }
 
     return {
-      wallet: wallet as IWallet,
-      recentTransactions: wallet.transactions as ITransaction[]
+      wallet: prismaWalletToIWallet(wallet),
+      recentTransactions: wallet.transactions.map(prismaTransactionToITransaction)
     };
   }
 
@@ -97,7 +98,7 @@ export class WalletService {
       }
     });
 
-    return updatedWallet as IWallet;
+    return prismaWalletToIWallet(updatedWallet);
   }
 
   // Deduct funds from wallet
@@ -135,7 +136,7 @@ export class WalletService {
       }
     });
 
-    return updatedWallet as IWallet;
+    return prismaWalletToIWallet(updatedWallet);
   }
 
   // Transfer funds between wallets
