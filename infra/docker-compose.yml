@@ -12,6 +12,8 @@ services:
     volumes:
       - ../apps/frontend:/app
       - /app/node_modules
+    env_file:
+      - ../apps/frontend/.env
     environment:
       - NEXT_TELEMETRY_DISABLED=1
     depends_on:
@@ -28,9 +30,8 @@ services:
     volumes:
       - ../apps/backend:/app
       - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+    env_file:
+      - ../apps/backend/.env
     depends_on:
       - db
 
