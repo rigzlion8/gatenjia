@@ -110,7 +110,7 @@ export default function AdminDashboard() {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const getRoleDisplayName = (role: string) => {

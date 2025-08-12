@@ -108,7 +108,7 @@ export default function Dashboard() {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const getTransactionTypeColor = (type: string) => {
