@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './modules/auth/auth.routes.js';
-import walletRoutes from './modules/auth/wallet.routes.js';
-import notificationRoutes from './modules/auth/notification.routes.js';
-import paymentRoutes from './modules/auth/payment.routes.js';
+import authRoutes from './modules/auth/auth.routes';
+import walletRoutes from './modules/auth/wallet.routes';
+import notificationRoutes from './modules/auth/notification.routes';
+import paymentRoutes from './modules/auth/payment.routes';
 
 // Load environment variables
 dotenv.config();
