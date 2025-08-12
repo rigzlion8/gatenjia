@@ -2,10 +2,13 @@
 nixPkgs = ["nodejs_18", "yarn"]
 
 [phases.install]
-cmds = ["cd apps/frontend && yarn install --production"]
+cmds = ["cd apps/frontend && yarn install"]
 
 [phases.build]
 cmds = ["cd apps/frontend && yarn build"]
+
+[phases.install-prod]
+cmds = ["cd apps/frontend && yarn install --production"]
 
 [start]
 cmd = "cd apps/frontend && yarn start"
