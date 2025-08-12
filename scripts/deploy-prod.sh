@@ -64,11 +64,11 @@ build_production_images() {
     
     # Build backend
     print_status "Building backend image..."
-    docker build -f apps/backend/Dockerfile -t gatenjia-backend:prod .
+    docker build -f Dockerfile.backend -t gatenjia-backend:prod .
     
     # Build frontend
     print_status "Building frontend image..."
-    docker build -f apps/frontend/Dockerfile -t gatenjia-frontend:prod .
+    docker build -f Dockerfile.frontend -t gatenjia-frontend:prod .
     
     print_success "Production images built successfully"
 }
