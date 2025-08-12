@@ -18,12 +18,13 @@
 ## 🐳 **Docker Build Process**
 
 ### **Build Steps in Railway:**
-1. **Install Dependencies** - `npm ci --only=production`
+1. **Install ALL Dependencies** - `npm ci` (includes TypeScript compiler)
 2. **Copy Prisma Schema** - Copy from `apps/backend/prisma/`
 3. **Generate Prisma Client** - `npx prisma generate`
 4. **Copy Source Code** - Copy from `apps/backend/src/`
-5. **Build Application** - `npm run build`
-6. **Start Service** - `npm start`
+5. **Build Application** - `npm run build` (TypeScript compilation)
+6. **Clean Up** - Remove dev dependencies for smaller image
+7. **Start Service** - `npm start`
 
 ### **Key Optimizations:**
 - **Multi-stage build** for smaller image size
@@ -101,6 +102,12 @@ Error: connect ECONNREFUSED
 
 # TypeScript compilation failed
 error TS2345: Argument of type...
+
+# TypeScript compiler not found
+sh: 1: tsc: not found
+exit code: 127
+
+# Solution: Ensure dev dependencies are installed during build
 ```
 
 ## 📊 **Monitoring & Health Checks**
