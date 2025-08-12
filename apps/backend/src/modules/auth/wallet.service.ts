@@ -4,6 +4,7 @@ import { whatsappService } from '../../services/whatsapp.service';
 import { emailService } from '../../services/email.service';
 import { notificationService } from '../../services/notification.service';
 import { prismaWalletToIWallet, prismaTransactionToITransaction } from './type-converters';
+import { TRANSACTION_TYPES, TRANSACTION_STATUSES } from './auth.constants';
 
 export class WalletService {
   // Create wallet for new user
@@ -20,10 +21,10 @@ export class WalletService {
     await prisma.transaction.create({
       data: {
         walletId: wallet.id,
-        type: TransactionType.CREDIT,
+        type: TRANSACTION_TYPES.CREDIT,
         amount: 100,
         description: 'Initial wallet balance - Welcome bonus',
-        status: TransactionStatus.COMPLETED
+        status: TRANSACTION_STATUSES.COMPLETED
       }
     });
 
@@ -91,10 +92,10 @@ export class WalletService {
     await prisma.transaction.create({
       data: {
         walletId: wallet.id,
-        type: TransactionType.CREDIT,
+        type: TRANSACTION_TYPES.CREDIT,
         amount,
         description,
-        status: TransactionStatus.COMPLETED
+        status: TRANSACTION_STATUSES.COMPLETED
       }
     });
 
@@ -129,10 +130,10 @@ export class WalletService {
     await prisma.transaction.create({
       data: {
         walletId: wallet.id,
-        type: TransactionType.DEBIT,
+        type: TRANSACTION_TYPES.DEBIT,
         amount,
         description,
-        status: TransactionStatus.COMPLETED
+        status: TRANSACTION_STATUSES.COMPLETED
       }
     });
 
@@ -179,20 +180,20 @@ export class WalletService {
       await tx.transaction.create({
         data: {
           walletId: fromWallet.id,
-          type: TransactionType.TRANSFER,
+          type: TRANSACTION_TYPES.TRANSFER,
           amount,
           description: `Transfer to ${toUserId}: ${description}`,
-          status: TransactionStatus.COMPLETED
+          status: TRANSACTION_STATUSES.COMPLETED
         }
       });
 
       await tx.transaction.create({
         data: {
           walletId: toWallet.id,
-          type: TransactionType.CREDIT,
+          type: TRANSACTION_TYPES.CREDIT,
           amount,
           description: `Transfer from ${fromUserId}: ${description}`,
-          status: TransactionStatus.COMPLETED
+          status: TRANSACTION_STATUSES.COMPLETED
         }
       });
 
@@ -336,20 +337,20 @@ export class WalletService {
       await tx.transaction.create({
         data: {
           walletId: fromWallet.id,
-          type: TransactionType.TRANSFER,
+          type: TRANSACTION_TYPES.TRANSFER,
           amount,
           description: `Transfer to ${toUserId}: ${description}`,
-          status: TransactionStatus.COMPLETED
+          status: TRANSACTION_STATUSES.COMPLETED
         }
       });
 
       await tx.transaction.create({
         data: {
           walletId: toWallet.id,
-          type: TransactionType.CREDIT,
+          type: TRANSACTION_TYPES.CREDIT,
           amount,
           description: `Transfer from ${fromUserId}: ${description}`,
-          status: TransactionStatus.COMPLETED
+          status: TRANSACTION_STATUSES.COMPLETED
         }
       });
 

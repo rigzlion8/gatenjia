@@ -152,7 +152,7 @@ export class AuthService {
     }
 
     // Check user status - allow ACTIVE and PENDING_VERIFICATION users to log in
-    if (user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
+    if (user.status === USER_STATUSES.INACTIVE || user.status === USER_STATUSES.SUSPENDED) {
       throw new Error('Account is not active. Please contact support.');
     }
 
@@ -199,8 +199,8 @@ export class AuthService {
           lastName,
           password: '', // No password for Google users
           googleId,
-          role: UserRole.USER,
-          status: UserStatus.ACTIVE, // Google users are active by default
+          role: USER_ROLES.USER,
+          status: USER_STATUSES.ACTIVE, // Google users are active by default
           emailVerified: true
         }
       });
@@ -279,12 +279,12 @@ export class AuthService {
 
   // Helper method to check if user can access features
   canUserAccessFeatures(userStatus: UserStatus): boolean {
-    return userStatus === UserStatus.ACTIVE || userStatus === UserStatus.PENDING_VERIFICATION;
+    return userStatus === USER_STATUSES.ACTIVE || userStatus === USER_STATUSES.PENDING_VERIFICATION;
   }
 
   // Helper method to check if user has full access
   hasFullAccess(userStatus: UserStatus): boolean {
-    return userStatus === UserStatus.ACTIVE;
+    return userStatus === USER_STATUSES.ACTIVE;
   }
 
   // Search users for money transfers
@@ -302,7 +302,7 @@ export class AuthService {
             ]
           },
           { id: { not: currentUserId } }, // Exclude current user
-          { status: { in: [UserStatus.ACTIVE, UserStatus.PENDING_VERIFICATION] } } // Only active users
+          { status: { in: [USER_STATUSES.ACTIVE, USER_STATUSES.PENDING_VERIFICATION] } } // Only active users
         ]
       },
       select: {
@@ -330,7 +330,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can view user details');
     }
 
@@ -353,7 +353,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can update users');
     }
 
@@ -384,7 +384,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can delete users');
     }
 
@@ -413,7 +413,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can create users with specific roles');
     }
 
@@ -439,7 +439,7 @@ export class AuthService {
         lastName,
         password: hashedPassword,
         role,
-        status: UserStatus.ACTIVE // Admin-created users are active by default
+        status: USER_STATUSES.ACTIVE // Admin-created users are active by default
       }
     });
 
@@ -455,7 +455,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can update user roles');
     }
 
@@ -515,7 +515,7 @@ export class AuthService {
       where: { id: adminUserId }
     });
 
-    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+    if (!adminUser || adminUser.role !== USER_ROLES.ADMIN) {
       throw new Error('Unauthorized: Only admins can view all users');
     }
 

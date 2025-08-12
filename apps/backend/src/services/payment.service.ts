@@ -1,7 +1,7 @@
-import { prisma } from '../config/database.js';
-import { notificationService } from './notification.service.js';
-import { emailService } from './email.service.js';
-import { TransactionType, TransactionStatus } from '../modules/auth/auth.types.js';
+import { prisma } from '../config/database';
+import { notificationService } from './notification.service';
+import { emailService } from './email.service';
+import { TRANSACTION_TYPES, TRANSACTION_STATUSES } from '../modules/auth/auth.constants';
 
 export interface PaymentCardDetails {
   cardNumber: string;
@@ -300,21 +300,21 @@ export class PaymentService {
 
       console.log(`[TRANSACTION] Creating transaction record with data:`, {
         walletId: wallet.id,
-        type: TransactionType.CREDIT,
+        type: TRANSACTION_TYPES.CREDIT,
         amount,
         description,
         reference,
-        status: TransactionStatus.COMPLETED
+        status: TRANSACTION_STATUSES.COMPLETED
       });
 
       const transaction = await prisma.transaction.create({
         data: {
           walletId: wallet.id,
-          type: TransactionType.CREDIT,
+          type: TRANSACTION_TYPES.CREDIT,
           amount,
           description,
           reference,
-          status: TransactionStatus.COMPLETED
+          status: TRANSACTION_STATUSES.COMPLETED
         }
       });
 
