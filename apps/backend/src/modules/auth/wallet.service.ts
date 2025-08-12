@@ -36,7 +36,8 @@ export class WalletService {
       include: {
         transactions: {
           orderBy: { createdAt: 'desc' },
-          take: 10 // Last 10 transactions
+          take: 5 // Show only 5 most recent transactions on dashboard
+          // Users can view all transactions on the dedicated transactions page
         }
       }
     });
@@ -203,8 +204,16 @@ export class WalletService {
     return result;
   }
 
-  // Get transaction history
-  async getTransactionHistory(userId: string, limit: number = 50, offset: number = 0) {
+  // Get transaction history with filtering, sorting, and pagination
+  async getTransactionHistory(
+    userId: string, 
+    limit: number = 20, 
+    offset: number = 0,
+    type?: string,
+    status?: string,
+    sortBy: string = 'createdAt',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
     const wallet = await prisma.wallet.findUnique({
       where: { userId }
     });
@@ -213,14 +222,52 @@ export class WalletService {
       throw new Error('Wallet not found');
     }
 
+    // Build where clause for filtering
+    const whereClause: any = { walletId: wallet.id };
+    if (type && type !== 'ALL') {
+      whereClause.type = type;
+    }
+    if (status && status !== 'ALL') {
+      whereClause.status = status;
+    }
+
+    // Build order by clause for sorting
+    let orderByClause: any = {};
+    switch (sortBy) {
+      case 'amount':
+        orderByClause.amount = sortOrder;
+        break;
+      case 'type':
+        orderByClause.type = sortOrder;
+        break;
+      case 'status':
+        orderByClause.status = sortOrder;
+        break;
+      case 'createdAt':
+      default:
+        orderByClause.createdAt = sortOrder;
+        break;
+    }
+
+    // Get total count for pagination
+    const total = await prisma.transaction.count({
+      where: whereClause
+    });
+
+    // Get transactions with pagination
     const transactions = await prisma.transaction.findMany({
-      where: { walletId: wallet.id },
-      orderBy: { createdAt: 'desc' },
+      where: whereClause,
+      orderBy: orderByClause,
       take: limit,
       skip: offset
     });
 
-    return transactions as ITransaction[];
+    return {
+      transactions: transactions as ITransaction[],
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: Math.floor(offset / limit) + 1
+    };
   }
 
   // Admin method: Get any user's wallet (admin only)
@@ -230,7 +277,8 @@ export class WalletService {
       include: {
         transactions: {
           orderBy: { createdAt: 'desc' },
-          take: 10 // Last 10 transactions
+          take: 5 // Show only 5 most recent transactions for consistency
+          // Admins can view all transactions on the dedicated transactions page
         }
       }
     });

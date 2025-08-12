@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { apiClient } from '../lib/api';
 import Link from 'next/link';
 
@@ -20,73 +20,54 @@ interface Notification {
   };
 }
 
-export default function NotificationCenter() {
+export interface NotificationCenterRef {
+  refreshNotifications: () => void;
+}
+
+const NotificationCenter = forwardRef<NotificationCenterRef>((props, ref) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Expose refresh function for external use
+  const refreshNotifications = () => {
+    fetchNotifications();
+  };
+
+  useImperativeHandle(ref, () => ({
+    refreshNotifications
+  }));
+
   useEffect(() => {
     fetchNotifications();
+    
+    // Refresh notifications every 30 seconds to catch new ones
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      // For now, we'll create mock notifications since we haven't implemented the backend yet
-      // In the future, this will call: const response = await apiClient.get('/api/notifications');
       
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'EMAIL',
-          title: 'Welcome to Gatenjia!',
-          message: 'Your account has been successfully created. Welcome to the platform!',
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          metadata: {
-            emailId: 'welcome-email-1'
-          }
-        },
-        {
-          id: '2',
-          type: 'TRANSACTION',
-          title: 'Money Received',
-          message: 'You received 25 G Coins from Test User',
-          isRead: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          metadata: {
-            transactionId: 'tx-123',
-            amount: 25,
-            senderName: 'Test User'
-          }
-        },
-        {
-          id: '3',
-          type: 'EMAIL',
-          title: 'Transfer Confirmation',
-          message: 'Your transfer of 25 G Coins has been completed successfully',
-          isRead: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-          metadata: {
-            emailId: 'transfer-email-1',
-            amount: 25
-          }
-        },
-        {
-          id: '4',
-          type: 'ACCOUNT',
-          title: 'Profile Updated',
-          message: 'Your profile information has been successfully updated',
-          isRead: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-        }
-      ];
+      // Fetch real notifications from backend
+      const response = await apiClient.get<{success: boolean, data: Notification[]}>('/api/notifications');
       
-      setNotifications(mockNotifications);
-      setUnreadCount(mockNotifications.filter(n => !n.isRead).length);
+      if (response.success && response.data) {
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter(n => !n.isRead).length);
+      } else {
+        console.error('Failed to fetch notifications:', response);
+        setNotifications([]);
+        setUnreadCount(0);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      // Fallback to empty state if API fails
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -94,19 +75,20 @@ export default function NotificationCenter() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // Try to use the real API first
-      try {
-        await apiClient.put(`/api/notifications/${notificationId}/read`);
-      } catch (apiError) {
-        console.log('API not ready yet, updating locally:', apiError);
-      }
+      // Call the real API
+      const response = await apiClient.put(`/api/notifications/${notificationId}/read`);
       
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId ? { ...n, isRead: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (response.success) {
+        // Update local state only if API call succeeds
+        setNotifications(prev => 
+          prev.map(n => 
+            n.id === notificationId ? { ...n, isRead: true } : n
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } else {
+        console.error('Failed to mark notification as read:', response);
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -114,17 +96,18 @@ export default function NotificationCenter() {
 
   const markAllAsRead = async () => {
     try {
-      // Try to use the real API first
-      try {
-        await apiClient.put('/api/notifications/mark-all-read');
-      } catch (apiError) {
-        console.log('API not ready yet, updating locally:', apiError);
-      }
+      // Call the real API
+      const response = await apiClient.put('/api/notifications/mark-all-read');
       
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, isRead: true }))
-      );
-      setUnreadCount(0);
+      if (response.success) {
+        // Update local state only if API call succeeds
+        setNotifications(prev => 
+          prev.map(n => ({ ...n, isRead: true }))
+        );
+        setUnreadCount(0);
+      } else {
+        console.error('Failed to mark all notifications as read:', response);
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -306,4 +289,6 @@ export default function NotificationCenter() {
       )}
     </div>
   );
-}
+});
+
+export default NotificationCenter;

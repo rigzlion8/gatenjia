@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api';
-import NotificationCenter from '../../components/NotificationCenter';
+import NotificationCenter, { NotificationCenterRef } from '../../components/NotificationCenter';
 
 interface User {
   id: string;
@@ -46,6 +46,7 @@ interface WalletData {
 
 export default function Dashboard() {
   const router = useRouter();
+  const notificationCenterRef = useRef<NotificationCenterRef>(null);
   const [user, setUser] = useState<User | null>(null);
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,6 +110,11 @@ export default function Dashboard() {
       // Refresh wallet data to show updated balance and transactions
       fetchWalletData();
       
+      // Refresh notifications to show new transfer notifications
+      if (notificationCenterRef.current) {
+        notificationCenterRef.current.refreshNotifications();
+      }
+      
       // Clear URL parameters after processing
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
@@ -127,6 +133,11 @@ export default function Dashboard() {
       
       const response = await apiClient.get<WalletData>('/api/wallet/wallet');
       setWalletData(response.data);
+      
+      // Refresh notifications to catch any new ones
+      if (notificationCenterRef.current) {
+        notificationCenterRef.current.refreshNotifications();
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
       setError(errorMessage);
@@ -192,7 +203,7 @@ export default function Dashboard() {
               <p className="text-gray-600">Welcome back, {user.firstName}!</p>
             </div>
             <div className="flex items-center space-x-4">
-              <NotificationCenter />
+              <NotificationCenter ref={notificationCenterRef} />
               <Link
                 href="/accounts"
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -380,7 +391,15 @@ export default function Dashboard() {
           </div>
         ) : walletData && walletData.recentTransactions.length > 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Transactions</h2>
+              <Link
+                href="/transactions"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                View All Transactions
+              </Link>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -428,7 +447,15 @@ export default function Dashboard() {
           </div>
         ) : walletData && walletData.recentTransactions.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Transactions</h2>
+              <Link
+                href="/transactions"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                View All Transactions
+              </Link>
+            </div>
             <div className="text-center py-8">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

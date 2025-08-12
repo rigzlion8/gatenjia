@@ -69,8 +69,13 @@ export class WalletController {
   async getTransactionHistory(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.userId;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const offset = parseInt(req.query.offset as string) || 0;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+      const type = req.query.type as string;
+      const status = req.query.status as string;
+      const sortBy = req.query.sortBy as string || 'createdAt';
+      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
       
       if (!userId) {
         res.status(401).json({
@@ -80,11 +85,19 @@ export class WalletController {
         return;
       }
 
-      const transactions = await this.walletService.getTransactionHistory(userId, limit, offset);
+      const result = await this.walletService.getTransactionHistory(
+        userId, 
+        limit, 
+        offset, 
+        type, 
+        status, 
+        sortBy, 
+        sortOrder
+      );
       
       res.status(200).json({
         success: true,
-        data: transactions
+        data: result
       });
     } catch (error) {
       console.error('Get transaction history error:', error);

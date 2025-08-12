@@ -222,8 +222,13 @@ export default function AddFundsPage() {
           description: `Bank deposit - ${amount} G Coins`
         });
 
-        if (response.data.success) {
-          setSuccess(response.data.message);
+        console.log('[FRONTEND] Payment response received:', response);
+        console.log('[FRONTEND] Response success value:', response.success);
+        console.log('[FRONTEND] Response message:', response.message);
+
+        if (response.success) {
+          console.log('[FRONTEND] Payment successful, setting success state');
+          setSuccess(response.message || 'Payment successful!');
           setAmount('');
           setCardDetails({
             cardNumber: '',
@@ -246,7 +251,8 @@ export default function AddFundsPage() {
             router.push('/dashboard');
           }, 3000);
         } else {
-          setError(response.data.error || 'Payment failed');
+          console.log('[FRONTEND] Payment failed, setting error state');
+          setError(response.message || 'Payment failed');
         }
       } catch (error: any) {
         console.error('Payment error:', error);

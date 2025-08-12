@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { notificationService } from './notification.service.js';
+import { TransactionType, TransactionStatus } from '../modules/auth/auth.types.js';
 
 export interface PaymentCardDetails {
   cardNumber: string;
@@ -36,29 +37,38 @@ export class PaymentService {
    * Process payment and add funds to user wallet
    */
   async processPaymentAndAddFunds(paymentRequest: PaymentRequest): Promise<PaymentResponse> {
+    console.log(`[PAYMENT] Starting payment processing for user ${paymentRequest.userId}, amount: ${paymentRequest.amount}`);
+    
     try {
       // Validate card details
+      console.log(`[PAYMENT] Validating card details for user ${paymentRequest.userId}`);
       const cardValidation = this.validateCardDetails(paymentRequest.cardDetails);
       if (!cardValidation.isValid) {
+        console.log(`[PAYMENT] Card validation failed for user ${paymentRequest.userId}: ${cardValidation.error}`);
         return {
           success: false,
           message: 'Invalid card details',
           error: cardValidation.error
         };
       }
+      console.log(`[PAYMENT] Card validation passed for user ${paymentRequest.userId}`);
 
       // Simulate payment processing (in production, this would integrate with Stripe, PayPal, etc.)
+      console.log(`[PAYMENT] Processing payment with bank for user ${paymentRequest.userId}`);
       const paymentResult = await this.processPaymentWithBank(paymentRequest);
       
       if (!paymentResult.success) {
+        console.log(`[PAYMENT] Bank payment failed for user ${paymentRequest.userId}: ${paymentResult.error}`);
         return {
           success: false,
           message: 'Payment failed',
           error: paymentResult.error
         };
       }
+      console.log(`[PAYMENT] Bank payment successful for user ${paymentRequest.userId}, transaction ID: ${paymentResult.transactionId}`);
 
       // Add funds to user wallet
+      console.log(`[PAYMENT] Adding funds to wallet for user ${paymentRequest.userId}, amount: ${paymentRequest.amount}`);
       const walletUpdate = await this.addFundsToWallet(
         paymentRequest.userId,
         paymentRequest.amount,
@@ -66,23 +76,28 @@ export class PaymentService {
       );
 
       if (!walletUpdate.success) {
+        console.log(`[PAYMENT] Wallet update failed for user ${paymentRequest.userId}: ${walletUpdate.error}`);
         return {
           success: false,
           message: 'Wallet update failed',
           error: walletUpdate.error
         };
       }
+      console.log(`[PAYMENT] Wallet update successful for user ${paymentRequest.userId}`);
 
       // Create transaction record
+      console.log(`[PAYMENT] Creating transaction record for user ${paymentRequest.userId}`);
       const transaction = await this.createTransactionRecord(
         paymentRequest.userId,
         paymentRequest.amount,
         paymentRequest.description || 'Bank deposit',
         paymentResult.transactionId || 'unknown'
       );
+      console.log(`[PAYMENT] Transaction record created successfully for user ${paymentRequest.userId}, transaction ID: ${transaction.id}`);
 
       // Send notification to user
       try {
+        console.log(`[PAYMENT] Creating notification for user ${paymentRequest.userId}`);
         await notificationService.createNotification({
           userId: paymentRequest.userId,
           type: 'TRANSACTION',
@@ -94,11 +109,13 @@ export class PaymentService {
             type: 'BANK_DEPOSIT'
           }
         });
+        console.log(`[PAYMENT] Notification created successfully for user ${paymentRequest.userId}`);
       } catch (error) {
-        console.error('Failed to create notification:', error);
+        console.error(`[PAYMENT] Failed to create notification for user ${paymentRequest.userId}:`, error);
         // Don't fail the payment if notification fails
       }
 
+      console.log(`[PAYMENT] Payment processing completed successfully for user ${paymentRequest.userId}`);
       return {
         success: true,
         transactionId: transaction.id,
@@ -106,7 +123,7 @@ export class PaymentService {
       };
 
     } catch (error) {
-      console.error('Payment processing error:', error);
+      console.error(`[PAYMENT] Payment processing error for user ${paymentRequest.userId}:`, error);
       return {
         success: false,
         message: 'Payment processing failed',
@@ -160,11 +177,15 @@ export class PaymentService {
    * Simulate payment processing with bank
    */
   private async processPaymentWithBank(paymentRequest: PaymentRequest): Promise<{ success: boolean; transactionId?: string; error?: string }> {
+    console.log(`[BANK] Starting bank payment processing for user ${paymentRequest.userId}, amount: ${paymentRequest.amount}`);
+    
     // Simulate API call delay
+    console.log(`[BANK] Simulating API call delay for user ${paymentRequest.userId}`);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Simulate payment success/failure (90% success rate for demo)
     const isSuccess = Math.random() > 0.1;
+    console.log(`[BANK] Payment success simulation for user ${paymentRequest.userId}: ${isSuccess ? 'SUCCESS' : 'FAILURE'}`);
 
     if (!isSuccess) {
       // Simulate common payment failures
@@ -176,6 +197,7 @@ export class PaymentService {
         'Card blocked'
       ];
       const randomFailure = failureReasons[Math.floor(Math.random() * failureReasons.length)];
+      console.log(`[BANK] Payment failed for user ${paymentRequest.userId}: ${randomFailure}`);
       
       return {
         success: false,
@@ -185,6 +207,7 @@ export class PaymentService {
 
     // Generate mock transaction ID
     const transactionId = `bank_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[BANK] Payment successful for user ${paymentRequest.userId}, transaction ID: ${transactionId}`);
 
     return {
       success: true,
@@ -196,18 +219,24 @@ export class PaymentService {
    * Add funds to user wallet
    */
   private async addFundsToWallet(userId: string, amount: number, description: string): Promise<{ success: boolean; error?: string }> {
+    console.log(`[WALLET] Starting wallet update for user ${userId}, amount: ${amount}`);
+    
     try {
       // Get user's wallet
+      console.log(`[WALLET] Fetching wallet for user ${userId}`);
       const wallet = await prisma.wallet.findUnique({
         where: { userId }
       });
 
       if (!wallet) {
+        console.log(`[WALLET] Wallet not found for user ${userId}`);
         return { success: false, error: 'Wallet not found' };
       }
+      console.log(`[WALLET] Wallet found for user ${userId}, current balance: ${wallet.balance}`);
 
       // Update wallet balance
-      await prisma.wallet.update({
+      console.log(`[WALLET] Updating wallet balance for user ${userId}, incrementing by ${amount}`);
+      const updatedWallet = await prisma.wallet.update({
         where: { userId },
         data: {
           balance: {
@@ -215,10 +244,11 @@ export class PaymentService {
           }
         }
       });
+      console.log(`[WALLET] Wallet balance updated successfully for user ${userId}, new balance: ${updatedWallet.balance}`);
 
       return { success: true };
     } catch (error) {
-      console.error('Error updating wallet:', error);
+      console.error(`[WALLET] Error updating wallet for user ${userId}:`, error);
       return { success: false, error: 'Failed to update wallet' };
     }
   }
@@ -227,29 +257,44 @@ export class PaymentService {
    * Create transaction record
    */
   private async createTransactionRecord(userId: string, amount: number, description: string, reference: string): Promise<any> {
+    console.log(`[TRANSACTION] Starting transaction creation for user ${userId}, amount: ${amount}, reference: ${reference}`);
+    
     try {
+      console.log(`[TRANSACTION] Fetching wallet for user ${userId}`);
       const wallet = await prisma.wallet.findUnique({
         where: { userId }
       });
 
       if (!wallet) {
+        console.log(`[TRANSACTION] Wallet not found for user ${userId}`);
         throw new Error('Wallet not found');
       }
+      console.log(`[TRANSACTION] Wallet found for user ${userId}, wallet ID: ${wallet.id}`);
+
+      console.log(`[TRANSACTION] Creating transaction record with data:`, {
+        walletId: wallet.id,
+        type: TransactionType.CREDIT,
+        amount,
+        description,
+        reference,
+        status: TransactionStatus.COMPLETED
+      });
 
       const transaction = await prisma.transaction.create({
         data: {
           walletId: wallet.id,
-          type: 'CREDIT',
+          type: TransactionType.CREDIT,
           amount,
           description,
           reference,
-          status: 'COMPLETED'
+          status: TransactionStatus.COMPLETED
         }
       });
 
+      console.log(`[TRANSACTION] Transaction record created successfully for user ${userId}, transaction ID: ${transaction.id}`);
       return transaction;
     } catch (error) {
-      console.error('Error creating transaction record:', error);
+      console.error(`[TRANSACTION] Error creating transaction record for user ${userId}:`, error);
       throw error;
     }
   }
