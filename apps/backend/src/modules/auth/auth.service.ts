@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../config/database.js';
-import { WalletService } from './wallet.service.js';
-import { emailService } from '../../services/email.service.js';
-import { notificationService } from '../../services/notification.service.js';
+import { prisma } from '../../config/database';
+import { WalletService } from './wallet.service';
+import { emailService } from '../../services/email.service';
+import { notificationService } from '../../services/notification.service';
 import { 
   IUser, 
   ICreateUserRequest, 
@@ -12,7 +12,8 @@ import {
   IUserProfile,
   UserRole,
   UserStatus 
-} from './auth.types.js';
+} from './auth.types';
+import { prismaUserToIUser, prismaUsersToIUsers } from './type-converters';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production';
@@ -80,7 +81,7 @@ export class AuthService {
     });
 
     // Generate tokens for the newly created user
-    const accessToken = this.generateAccessToken(user.id, user.role);
+    const accessToken = this.generateAccessToken(user.id, user.role as UserRole);
     const refreshToken = this.generateRefreshToken(user.id);
 
     // Store refresh token

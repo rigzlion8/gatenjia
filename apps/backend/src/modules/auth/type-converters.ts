@@ -37,3 +37,10 @@ export function prismaWalletToIWallet(prismaWallet: any): any {
     balance: prismaWallet.balance ? decimalToNumber(prismaWallet.balance) : 0
   };
 }
+
+/**
+ * Convert Prisma user array to IUser array
+ */
+export function prismaUsersToIUsers(prismaUsers: any[]): any[] {
+  return prismaUsers.map(prismaUserToIUser);
+}

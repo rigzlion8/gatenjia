@@ -1,32 +1,11 @@
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  CHECKER = 'CHECKER',
-  AUDITOR = 'AUDITOR',
-  COMPLIANCE = 'COMPLIANCE'
-}
+// Use string literals instead of enums for better Prisma compatibility
+export type UserRole = 'USER' | 'ADMIN' | 'CHECKER' | 'AUDITOR' | 'COMPLIANCE';
 
-export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  PENDING_VERIFICATION = 'PENDING_VERIFICATION'
-}
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING_VERIFICATION';
 
-export enum TransactionType {
-  CREDIT = 'CREDIT',
-  DEBIT = 'DEBIT',
-  TRANSFER = 'TRANSFER',
-  WITHDRAWAL = 'WITHDRAWAL',
-  DEPOSIT = 'DEPOSIT'
-}
+export type TransactionType = 'CREDIT' | 'DEBIT' | 'TRANSFER' | 'WITHDRAWAL' | 'DEPOSIT';
 
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED'
-}
+export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
 export interface IUser {
   id: string;
