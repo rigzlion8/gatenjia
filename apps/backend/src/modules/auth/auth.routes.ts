@@ -20,6 +20,13 @@ router.post('/admin/create-user', authenticateToken, requireAdmin, authControlle
 router.put('/admin/update-user-role', authenticateToken, requireAdmin, authController.updateUserRole.bind(authController));
 router.put('/admin/update-user-status', authenticateToken, requireAdmin, authController.updateUserStatus.bind(authController));
 router.put('/admin/update-user-password', authenticateToken, requireAdmin, authController.updateUserPassword.bind(authController));
+// User management routes (admin only)
 router.get('/admin/users', authenticateToken, requireAdmin, authController.getAllUsers.bind(authController));
+router.get('/admin/users/:id', authenticateToken, requireAdmin, authController.getUserById.bind(authController));
+router.put('/admin/users/:id', authenticateToken, requireAdmin, authController.updateUser.bind(authController));
+router.delete('/admin/users/:id', authenticateToken, requireAdmin, authController.deleteUser.bind(authController));
+
+// User search route (authenticated users can search for other users)
+router.get('/search-users', authenticateToken, authController.searchUsers.bind(authController));
 
 export default router;

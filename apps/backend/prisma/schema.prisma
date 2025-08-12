@@ -19,6 +19,7 @@ model User {
   role          UserRole    @default(USER)
   status        UserStatus  @default(PENDING_VERIFICATION)
   googleId      String?     @unique
+  phoneNumber   String?     // For WhatsApp integration
   emailVerified Boolean     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -27,6 +28,8 @@ model User {
   // Relations
   refreshTokens RefreshToken[]
   wallet        Wallet?
+  sentRequests  MoneyRequest[] @relation("RequestSender")
+  receivedRequests MoneyRequest[] @relation("RequestReceiver")
   
   @@map("users")
 }
@@ -75,6 +78,26 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model MoneyRequest {
+  id          String        @id @default(cuid())
+  requesterId String        // Who is requesting the money
+  fromUserId  String        // Who is being asked for money
+  amount      Decimal
+  description String
+  status      MoneyRequestStatus @default(PENDING)
+  viaWhatsApp Boolean       @default(false)
+  senderPhone String?       // Phone number for WhatsApp notification
+  rejectionReason String?   // Reason if rejected
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relations
+  requester User @relation("RequestReceiver", fields: [requesterId], references: [id], onDelete: Cascade)
+  fromUser  User @relation("RequestSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  
+  @@map("money_requests")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -102,5 +125,12 @@ enum TransactionStatus {
   PENDING
   COMPLETED
   FAILED
+  CANCELLED
+}
+
+enum MoneyRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
   CANCELLED
 }

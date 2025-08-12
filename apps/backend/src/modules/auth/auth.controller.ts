@@ -91,30 +91,17 @@ export class AuthController {
   // Google OAuth login
   async googleLogin(req: Request, res: Response): Promise<void> {
     try {
-      const { idToken } = req.body;
+      const { idToken, email, firstName, lastName } = req.body;
       
-      if (!idToken) {
+      if (!idToken || !email || !firstName || !lastName) {
         res.status(400).json({
           success: false,
-          message: 'Google ID token is required'
+          message: 'Google ID token, email, firstName, and lastName are required'
         });
         return;
       }
 
-      // In a real implementation, you would verify the Google ID token
-      // For now, we'll assume the frontend has already verified it
-      // and we're receiving the user data
-      const { googleId, email, firstName, lastName } = req.body;
-      
-      if (!googleId || !email || !firstName || !lastName) {
-        res.status(400).json({
-          success: false,
-          message: 'Google user data is incomplete'
-        });
-        return;
-      }
-
-      const authResponse = await this.authService.googleLogin(googleId, email, firstName, lastName);
+      const authResponse = await this.authService.googleLogin(idToken, email, firstName, lastName);
       
       res.status(200).json({
         success: true,
@@ -123,9 +110,38 @@ export class AuthController {
       });
     } catch (error) {
       console.error('Google login error:', error);
-      res.status(500).json({
+      res.status(401).json({
         success: false,
         message: error instanceof Error ? error.message : 'Google login failed'
+      });
+    }
+  }
+
+  // Search users (for money transfers)
+  async searchUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { q } = req.query;
+      const currentUserId = (req as any).user?.userId;
+      
+      if (!q || typeof q !== 'string' || q.length < 2) {
+        res.status(400).json({
+          success: false,
+          message: 'Search query must be at least 2 characters long'
+        });
+        return;
+      }
+
+      const users = await this.authService.searchUsers(q, currentUserId);
+      
+      res.status(200).json({
+        success: true,
+        data: users
+      });
+    } catch (error) {
+      console.error('User search error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'User search failed'
       });
     }
   }
@@ -377,6 +393,95 @@ export class AuthController {
       res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to get users'
+      });
+    }
+  }
+
+  // Admin-only: Get user by ID
+  async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      const { id } = req.params;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      const user = await this.authService.getUserById(id, adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        data: user
+      });
+    } catch (error) {
+      console.error('Get user by ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to get user'
+      });
+    }
+  }
+
+  // Admin-only: Update user
+  async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      const updatedUser = await this.authService.updateUser(id, updateData, adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        message: 'User updated successfully',
+        data: updatedUser
+      });
+    } catch (error) {
+      console.error('Update user error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update user'
+      });
+    }
+  }
+
+  // Admin-only: Delete user
+  async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      const { id } = req.params;
+      
+      if (!adminUserId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
+      await this.authService.deleteUser(id, adminUserId);
+      
+      res.status(200).json({
+        success: true,
+        message: 'User deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to delete user'
       });
     }
   }

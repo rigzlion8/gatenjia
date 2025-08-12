@@ -37,6 +37,7 @@ export interface IUser {
   role: UserRole;
   status: UserStatus;
   googleId?: string;
+  phoneNumber?: string;
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;

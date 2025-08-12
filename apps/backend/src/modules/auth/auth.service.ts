@@ -263,6 +263,125 @@ export class AuthService {
     return userStatus === UserStatus.ACTIVE;
   }
 
+  // Search users for money transfers
+  async searchUsers(query: string, currentUserId: string): Promise<Omit<IUser, 'password'>[]> {
+    const searchQuery = query.toLowerCase();
+    
+    const users = await prisma.user.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { firstName: { contains: searchQuery, mode: 'insensitive' } },
+              { lastName: { contains: searchQuery, mode: 'insensitive' } },
+              { email: { contains: searchQuery, mode: 'insensitive' } }
+            ]
+          },
+          { id: { not: currentUserId } }, // Exclude current user
+          { status: { in: [UserStatus.ACTIVE, UserStatus.PENDING_VERIFICATION] } } // Only active users
+        ]
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        createdAt: true,
+        lastLoginAt: true,
+        phoneNumber: true
+      },
+      take: 10 // Limit results
+    });
+
+    return users;
+  }
+
+  // Admin-only: Get user by ID
+  async getUserById(userId: string, adminUserId: string): Promise<Omit<IUser, 'password'>> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can view user details');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  // Admin-only: Update user
+  async updateUser(userId: string, updateData: Partial<IUser>, adminUserId: string): Promise<Omit<IUser, 'password'>> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can update users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Don't allow updating sensitive fields
+    const { password, id, ...safeUpdateData } = updateData;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: safeUpdateData
+    });
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  }
+
+  // Admin-only: Delete user
+  async deleteUser(userId: string, adminUserId: string): Promise<void> {
+    // Verify admin user exists and has admin role
+    const adminUser = await prisma.user.findUnique({
+      where: { id: adminUserId }
+    });
+
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      throw new Error('Unauthorized: Only admins can delete users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Prevent admin from deleting themselves
+    if (userId === adminUserId) {
+      throw new Error('Cannot delete your own account');
+    }
+
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+  }
+
   // Admin-only: Create user with specific role
   async createUserAsAdmin(userData: ICreateUserRequest, role: UserRole, adminUserId: string): Promise<IUserProfile> {
     // Verify admin user exists and has admin role
