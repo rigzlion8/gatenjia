@@ -567,9 +567,9 @@ export class WalletService {
       request.fromUserId,
       request.requesterId,
       Number(request.amount),
-      request.description,
+      request.description || 'Money request transfer',
       request.viaWhatsApp,
-      request.senderPhone
+      request.senderPhone || undefined
     );
 
     // Update request status
