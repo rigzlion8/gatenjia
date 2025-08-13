@@ -5,10 +5,10 @@ nixPkgs = ["nodejs_18", "yarn"]
 cmds = ["yarn install"]
 
 [phases.build]
-cmds = ["cd apps/frontend && yarn build"]
+cmds = ["yarn build"]
 
 [start]
-cmd = "cd apps/frontend && yarn start"
+cmd = "yarn start"
 
 [variables]
 NODE_ENV = "production"

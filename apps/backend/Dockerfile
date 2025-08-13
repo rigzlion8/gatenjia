@@ -1,28 +1,24 @@
-FROM node:20-slim
-
-# Install OpenSSL and other dependencies
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Copy package files
-COPY apps/backend/package*.json ./
-RUN npm install
+COPY package*.json ./
+COPY yarn.lock ./
 
-# Copy Prisma schema from backend directory
-COPY apps/backend/prisma ./prisma/
-
-# Generate Prisma client
-RUN npx prisma generate
+# Install dependencies
+RUN yarn install
 
 # Copy backend source code
-COPY apps/backend/src ./src
-COPY apps/backend/tsconfig.json ./
+COPY . ./
 
-# Build the application
-RUN npm run build
+# Build backend
+RUN yarn build
 
 EXPOSE 4000
-CMD ["npm", "start"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:4000/health || exit 1
+
+CMD ["yarn", "start"]
