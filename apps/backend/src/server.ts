@@ -8,6 +8,8 @@ async function startServer() {
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔌 Port: ${PORT}`);
   console.log(`🗄️ Database URL: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}`);
+  console.log(`🔑 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`);
+  console.log(`📧 Resend API Key: ${process.env.RESEND_API_KEY ? 'Set' : 'Not set'}`);
   
   try {
     // Start server first
@@ -28,16 +30,33 @@ async function startServer() {
       console.log('🎯 Server is now listening and ready for connections');
     });
     
-    // Try to connect to database (don't fail if it doesn't work)
-    try {
-      await connectDatabase();
-      console.log('✅ Database connected successfully');
-    } catch (dbError) {
-      console.error('⚠️ Database connection failed, but server is running:', dbError);
-      console.log('🔄 Database connection will be retried on first request');
+    // Try to connect to database with retries
+    let dbConnected = false;
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      try {
+        console.log(`🗄️ Attempting database connection (${attempt}/5)...`);
+        await connectDatabase();
+        console.log('✅ Database connected successfully');
+        dbConnected = true;
+        break;
+      } catch (dbError) {
+        console.error(`⚠️ Database connection attempt ${attempt} failed:`, dbError);
+        if (attempt < 5) {
+          console.log(`🔄 Retrying in 5 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
     }
+    
+    if (!dbConnected) {
+      console.error('❌ Failed to connect to database after 5 attempts');
+      console.log('🔄 Server will continue running but database operations may fail');
+    }
+    
+    console.log('🎉 Backend service is now fully operational');
+    
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
