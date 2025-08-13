@@ -76,5 +76,16 @@ process.on('SIGTERM', async () => {
 
 startServer().catch((error) => {
   console.error('❌ Failed to start server:', error);
-  process.exit(1);
+  console.error('❌ Error details:', {
+    message: error.message,
+    stack: error.stack,
+    code: error.code,
+    errno: error.errno
+  });
+  
+  // Keep process alive for a bit to see logs
+  setTimeout(() => {
+    console.error('🛑 Exiting due to startup failure');
+    process.exit(1);
+  }, 5000);
 });
