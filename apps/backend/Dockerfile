@@ -4,16 +4,15 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY yarn.lock ./
 
 # Install dependencies
-RUN yarn install
+RUN npm ci
 
 # Copy backend source code
 COPY . ./
 
 # Build backend
-RUN yarn build
+RUN npm run build
 
 EXPOSE 4000
 
@@ -21,4 +20,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-CMD ["yarn", "start"]
+CMD ["npm", "start"]

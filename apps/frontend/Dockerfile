@@ -7,10 +7,9 @@ WORKDIR /app
 
 # Copy package files first for better caching
 COPY package*.json ./
-COPY yarn.lock ./
 
 # Install dependencies
-RUN yarn install
+RUN npm ci
 
 # Copy configuration files
 COPY next.config.js ./
@@ -27,7 +26,7 @@ COPY lib ./lib
 COPY styles ./styles
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 EXPOSE 3000
 
@@ -35,4 +34,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
-CMD ["yarn", "start"]
+CMD ["npm", "start"]
