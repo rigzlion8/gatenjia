@@ -21,15 +21,33 @@ export interface TransactionData {
 }
 
 export class EmailService {
-  private resend: Resend;
+  private resend: Resend | null;
   private fromEmail: string;
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn('⚠️ RESEND_API_KEY is not set. Email sending will be disabled.');
+      this.resend = null;
+    } else {
+      try {
+        this.resend = new Resend(apiKey);
+      } catch (error) {
+        console.error('❌ Failed to initialize Resend client:', error);
+        this.resend = null;
+      }
+    }
     this.fromEmail = process.env.FROM_EMAIL || 'noreply@gatenjia.com';
   }
 
   private async sendEmail(emailData: EmailData): Promise<boolean> {
+    if (!this.resend) {
+      console.warn('✉️ EmailService disabled (no API key). Skipping email send for:', {
+        to: emailData.to,
+        subject: emailData.subject
+      });
+      return false;
+    }
     try {
       const result = await this.resend.emails.send({
         from: emailData.from || this.fromEmail,
