@@ -29,7 +29,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoint important
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
