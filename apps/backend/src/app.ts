@@ -42,12 +42,36 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint important
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Basic health check
+    const healthData: any = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      port: process.env.PORT || '4000'
+    };
+    
+    // Try to check database connection
+    try {
+      const { prisma } = await import('./config/database');
+      await prisma.$queryRaw`SELECT 1`;
+      healthData.database = 'connected';
+    } catch (dbError: any) {
+      healthData.database = 'disconnected';
+      healthData.databaseError = dbError?.message || 'Unknown database error';
+    }
+    
+    res.status(200).json(healthData);
+  } catch (error: any) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      error: error?.message || 'Unknown error'
+    });
+  }
 });
 
 // API routes
