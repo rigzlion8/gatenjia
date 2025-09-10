@@ -1,9 +1,10 @@
 FROM node:20-slim
 
-# Install OpenSSL and other required libraries for Prisma
+# Install OpenSSL, curl, and other required libraries for Prisma and healthchecks
 RUN apt-get update && apt-get install -y \
     openssl \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -29,7 +30,8 @@ RUN npx prisma generate
 EXPOSE 4000
 
 # Health check (use dynamic PORT from environment, default to 4000)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-4000}/health || exit 1
+# Increased start-period to 30s to allow for database connection and server startup
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
 
 CMD ["npm", "start"]

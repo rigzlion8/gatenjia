@@ -15,7 +15,10 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+        'https://gatenjia-frontend-production.up.railway.app'
+    ],
     credentials: true
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
@@ -25,7 +28,7 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });
-// Health check endpoint
+// Health check endpoint important
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'OK',

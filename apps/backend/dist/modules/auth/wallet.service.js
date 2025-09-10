@@ -6,6 +6,7 @@ const whatsapp_service_1 = require("../../services/whatsapp.service");
 const email_service_1 = require("../../services/email.service");
 const notification_service_1 = require("../../services/notification.service");
 const type_converters_1 = require("./type-converters");
+const auth_constants_1 = require("./auth.constants");
 class WalletService {
     // Create wallet for new user
     async createWallet(userId) {
@@ -20,10 +21,10 @@ class WalletService {
         await database_1.prisma.transaction.create({
             data: {
                 walletId: wallet.id,
-                type: TRANSACTION_TYPES.CREDIT,
+                type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                 amount: 100,
                 description: 'Initial wallet balance - Welcome bonus',
-                status: TRANSACTION_STATUSES.COMPLETED
+                status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
             }
         });
         return (0, type_converters_1.prismaWalletToIWallet)(wallet);
@@ -80,10 +81,10 @@ class WalletService {
         await database_1.prisma.transaction.create({
             data: {
                 walletId: wallet.id,
-                type: TRANSACTION_TYPES.CREDIT,
+                type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                 amount,
                 description,
-                status: TRANSACTION_STATUSES.COMPLETED
+                status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
             }
         });
         return (0, type_converters_1.prismaWalletToIWallet)(updatedWallet);
@@ -112,10 +113,10 @@ class WalletService {
         await database_1.prisma.transaction.create({
             data: {
                 walletId: wallet.id,
-                type: TRANSACTION_TYPES.DEBIT,
+                type: auth_constants_1.TRANSACTION_TYPES.DEBIT,
                 amount,
                 description,
-                status: TRANSACTION_STATUSES.COMPLETED
+                status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
             }
         });
         return (0, type_converters_1.prismaWalletToIWallet)(updatedWallet);
@@ -149,19 +150,19 @@ class WalletService {
             await tx.transaction.create({
                 data: {
                     walletId: fromWallet.id,
-                    type: TRANSACTION_TYPES.TRANSFER,
+                    type: auth_constants_1.TRANSACTION_TYPES.TRANSFER,
                     amount,
                     description: `Transfer to ${toUserId}: ${description}`,
-                    status: TRANSACTION_STATUSES.COMPLETED
+                    status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
                 }
             });
             await tx.transaction.create({
                 data: {
                     walletId: toWallet.id,
-                    type: TRANSACTION_TYPES.CREDIT,
+                    type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                     amount,
                     description: `Transfer from ${fromUserId}: ${description}`,
-                    status: TRANSACTION_STATUSES.COMPLETED
+                    status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
                 }
             });
             return {
@@ -271,19 +272,19 @@ class WalletService {
             await tx.transaction.create({
                 data: {
                     walletId: fromWallet.id,
-                    type: TRANSACTION_TYPES.TRANSFER,
+                    type: auth_constants_1.TRANSACTION_TYPES.TRANSFER,
                     amount,
                     description: `Transfer to ${toUserId}: ${description}`,
-                    status: TRANSACTION_STATUSES.COMPLETED
+                    status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
                 }
             });
             await tx.transaction.create({
                 data: {
                     walletId: toWallet.id,
-                    type: TRANSACTION_TYPES.CREDIT,
+                    type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                     amount,
                     description: `Transfer from ${fromUserId}: ${description}`,
-                    status: TRANSACTION_STATUSES.COMPLETED
+                    status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
                 }
             });
             // Send WhatsApp notification if enabled
@@ -443,7 +444,7 @@ class WalletService {
             throw new Error('Request is not pending');
         }
         // Process the transfer
-        const result = await this.transferToUser(request.fromUserId, request.requesterId, request.amount, request.description, request.viaWhatsApp, request.senderPhone);
+        const result = await this.transferToUser(request.fromUserId, request.requesterId, Number(request.amount), request.description || 'Money request transfer', request.viaWhatsApp, request.senderPhone || undefined);
         // Update request status
         await database_1.prisma.moneyRequest.update({
             where: { id: requestId },

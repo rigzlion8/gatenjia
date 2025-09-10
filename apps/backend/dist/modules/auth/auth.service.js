@@ -261,6 +261,7 @@ class AuthService {
                 status: true,
                 emailVerified: true,
                 createdAt: true,
+                updatedAt: true,
                 lastLoginAt: true,
                 phoneNumber: true
             },

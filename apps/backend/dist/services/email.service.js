@@ -4,10 +4,30 @@ exports.emailService = exports.EmailService = void 0;
 const resend_1 = require("resend");
 class EmailService {
     constructor() {
-        this.resend = new resend_1.Resend(process.env.RESEND_API_KEY);
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            console.warn('⚠️ RESEND_API_KEY is not set. Email sending will be disabled.');
+            this.resend = null;
+        }
+        else {
+            try {
+                this.resend = new resend_1.Resend(apiKey);
+            }
+            catch (error) {
+                console.error('❌ Failed to initialize Resend client:', error);
+                this.resend = null;
+            }
+        }
         this.fromEmail = process.env.FROM_EMAIL || 'noreply@gatenjia.com';
     }
     async sendEmail(emailData) {
+        if (!this.resend) {
+            console.warn('✉️ EmailService disabled (no API key). Skipping email send for:', {
+                to: emailData.to,
+                subject: emailData.subject
+            });
+            return false;
+        }
         try {
             const result = await this.resend.emails.send({
                 from: emailData.from || this.fromEmail,

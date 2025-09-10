@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.paymentService = exports.PaymentService = void 0;
-const database_js_1 = require("../config/database.js");
-const notification_service_js_1 = require("./notification.service.js");
-const email_service_js_1 = require("./email.service.js");
+const database_1 = require("../config/database");
+const notification_service_1 = require("./notification.service");
+const email_service_1 = require("./email.service");
+const auth_constants_1 = require("../modules/auth/auth.constants");
 class PaymentService {
     /**
      * Process payment and add funds to user wallet
@@ -54,7 +55,7 @@ class PaymentService {
             // Send notification to user
             try {
                 console.log(`[PAYMENT] Creating notification for user ${paymentRequest.userId}`);
-                await notification_service_js_1.notificationService.createNotification({
+                await notification_service_1.notificationService.createNotification({
                     userId: paymentRequest.userId,
                     type: 'TRANSACTION',
                     title: 'Funds Added Successfully',
@@ -75,12 +76,12 @@ class PaymentService {
             try {
                 console.log(`[PAYMENT] Sending email notification for user ${paymentRequest.userId}`);
                 // Get user details for email
-                const user = await database_js_1.prisma.user.findUnique({
+                const user = await database_1.prisma.user.findUnique({
                     where: { id: paymentRequest.userId },
                     select: { firstName: true, lastName: true, email: true }
                 });
                 if (user) {
-                    await email_service_js_1.emailService.sendFundsAddedEmail(user, paymentRequest.amount, paymentRequest.description || 'Bank deposit', transaction.id);
+                    await email_service_1.emailService.sendFundsAddedEmail(user, paymentRequest.amount, paymentRequest.description || 'Bank deposit', transaction.id);
                     console.log(`[PAYMENT] Email notification sent successfully for user ${paymentRequest.userId}`);
                 }
                 else {
@@ -183,7 +184,7 @@ class PaymentService {
         try {
             // Get user's wallet
             console.log(`[WALLET] Fetching wallet for user ${userId}`);
-            const wallet = await database_js_1.prisma.wallet.findUnique({
+            const wallet = await database_1.prisma.wallet.findUnique({
                 where: { userId }
             });
             if (!wallet) {
@@ -193,7 +194,7 @@ class PaymentService {
             console.log(`[WALLET] Wallet found for user ${userId}, current balance: ${wallet.balance}`);
             // Update wallet balance
             console.log(`[WALLET] Updating wallet balance for user ${userId}, incrementing by ${amount}`);
-            const updatedWallet = await database_js_1.prisma.wallet.update({
+            const updatedWallet = await database_1.prisma.wallet.update({
                 where: { userId },
                 data: {
                     balance: {
@@ -216,7 +217,7 @@ class PaymentService {
         console.log(`[TRANSACTION] Starting transaction creation for user ${userId}, amount: ${amount}, reference: ${reference}`);
         try {
             console.log(`[TRANSACTION] Fetching wallet for user ${userId}`);
-            const wallet = await database_js_1.prisma.wallet.findUnique({
+            const wallet = await database_1.prisma.wallet.findUnique({
                 where: { userId }
             });
             if (!wallet) {
@@ -226,20 +227,20 @@ class PaymentService {
             console.log(`[TRANSACTION] Wallet found for user ${userId}, wallet ID: ${wallet.id}`);
             console.log(`[TRANSACTION] Creating transaction record with data:`, {
                 walletId: wallet.id,
-                type: TRANSACTION_TYPES.CREDIT,
+                type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                 amount,
                 description,
                 reference,
-                status: TRANSACTION_STATUSES.COMPLETED
+                status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
             });
-            const transaction = await database_js_1.prisma.transaction.create({
+            const transaction = await database_1.prisma.transaction.create({
                 data: {
                     walletId: wallet.id,
-                    type: TRANSACTION_TYPES.CREDIT,
+                    type: auth_constants_1.TRANSACTION_TYPES.CREDIT,
                     amount,
                     description,
                     reference,
-                    status: TRANSACTION_STATUSES.COMPLETED
+                    status: auth_constants_1.TRANSACTION_STATUSES.COMPLETED
                 }
             });
             console.log(`[TRANSACTION] Transaction record created successfully for user ${userId}, transaction ID: ${transaction.id}`);
@@ -255,13 +256,13 @@ class PaymentService {
      */
     async getPaymentHistory(userId, limit = 10, offset = 0) {
         try {
-            const wallet = await database_js_1.prisma.wallet.findUnique({
+            const wallet = await database_1.prisma.wallet.findUnique({
                 where: { userId }
             });
             if (!wallet) {
                 throw new Error('Wallet not found');
             }
-            const transactions = await database_js_1.prisma.transaction.findMany({
+            const transactions = await database_1.prisma.transaction.findMany({
                 where: {
                     walletId: wallet.id,
                     type: 'CREDIT',
